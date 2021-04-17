@@ -228,7 +228,13 @@ class ServerUDP:
         lost_indices = torch.from_numpy(np.setdiff1d(reference_indices.numpy(), msg.numpy())).to(dtype=torch.int64)
         lost_indices_locations = torch.zeros_like(reference_indices).index_fill_(0, lost_indices, 1)
 
-        plt.plot(reference_indices.numpy(), lost_indices_locations.numpy())
+        import datetime
+
+        plt.plot(reference_indices.numpy(), lost_indices_locations.numpy(), label=f'{(lost_indices.shape[0] / self.MSG_SIZE)}')
+        plt.xlabel('Coordinate index')
+        plt.ylabel('Lost Packet')
+        plt.legend()
+        plt.savefig(f'./{datetime.datetime.now()}.jpg')
         plt.show(block=False)
         plt.pause(2)
         plt.close()
