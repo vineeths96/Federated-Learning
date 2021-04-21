@@ -61,8 +61,8 @@ class ServerTCP:
         encoded_message = self.encode(tensor)
         conn.send(encoded_message)
 
-        time.sleep(self.DELAY)
-        self.send_EOT(conn)
+        # time.sleep(self.DELAY)
+        # self.send_EOT(conn)
 
     def send_EOT(self, conn):
         encoded_message = self.encode(self.END_OF_MESSAGE)
@@ -82,7 +82,7 @@ class ServerTCP:
                 buffer += msg
 
                 if length and len(buffer) == length:
-                    readnext = False
+                    break
 
                 if length is None:
                     if b":" not in buffer:
@@ -163,8 +163,8 @@ class ClientTCP:
         message = self.encode(tensor)
         self.client.send(message)
 
-        time.sleep(self.DELAY)
-        self.send_EOT()
+        # time.sleep(self.DELAY)
+        # self.send_EOT()
 
     def send_EOT(self):
         encoded_message = self.encode(self.DISCONNECT_MESSAGE)
@@ -182,7 +182,8 @@ class ClientTCP:
                 buffer += msg
 
                 if length and len(buffer) == length:
-                    readnext = False
+                    break
+                    # readnext = False
 
                 if length is None:
                     if b":" not in buffer:
