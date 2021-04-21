@@ -78,7 +78,7 @@ class ServerTCP:
 
             readnext = True
             while readnext:
-                msg = conn.recv(2048 *8)
+                msg = conn.recv(2048 * 8)
                 buffer += msg
 
                 if len(buffer) == length:
@@ -174,7 +174,7 @@ class ClientTCP:
 
             readnext = True
             while readnext:
-                msg = self.client.recv(2048 *8)
+                msg = self.client.recv(2048 * 8)
                 buffer += msg
 
                 if length and len(buffer) >= length:
@@ -203,11 +203,10 @@ class ClientTCP:
                 continue
 
 
-
-
-
 class ServerUDP:
-    def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, CHUNK=100, DELAY=5e-4):
+    def __init__(
+        self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, CHUNK=100, DELAY=5e-4
+    ):
         self.SERVER = SERVER
         self.PORT = PORT
         self.MSG_SIZE = MSG_SIZE
@@ -270,7 +269,7 @@ class ServerUDP:
         buffer = []
         readnext = True
         while readnext:
-            msg, addr = self.server.recvfrom(2048 *8)
+            msg, addr = self.server.recvfrom(2048 * 8)
 
             try:
                 decoded_msg = self.decode(msg)
@@ -308,7 +307,9 @@ class ServerUDP:
 
 
 class ClientUDP:
-    def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), MSG_SIZE=100000, PORT=5050, CHUNK=100, DELAY=5e-4):
+    def __init__(
+        self, SERVER=socket.gethostbyname(socket.gethostname()), MSG_SIZE=100000, PORT=5050, CHUNK=100, DELAY=5e-4
+    ):
         self.SERVER = SERVER
         self.PORT = PORT
         self.MSG_SIZE = MSG_SIZE
@@ -349,11 +350,13 @@ class ClientUDP:
         encoded_message = self.encode(self.END_OF_MESSAGE)
         self.client.sendto(encoded_message, self.ADDR)
 
-    def receive(self,):
+    def receive(
+        self,
+    ):
         buffer = []
         readnext = True
         while readnext:
-            msg, addr = self.client.recvfrom(2048 *4)
+            msg, addr = self.client.recvfrom(2048 * 4)
 
             try:
                 decoded_msg = self.decode(msg)
