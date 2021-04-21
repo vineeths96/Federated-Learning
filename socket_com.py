@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 
 class ServerTCP:
-    def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, DELAY=5e-2):
+    def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, DELAY=5e-1):
         self.SERVER = SERVER
         self.PORT = PORT
         self.MSG_SIZE = MSG_SIZE
@@ -57,16 +57,16 @@ class ServerTCP:
 
         return tensor
 
-    def send_EOT(self, conn):
-        encoded_message = self.encode(self.END_OF_MESSAGE)
-        conn.send(encoded_message)
-
     def send(self, tensor, conn):
         encoded_message = self.encode(tensor)
         conn.send(encoded_message)
 
         time.sleep(self.DELAY)
         self.send_EOT(conn)
+
+    def send_EOT(self, conn):
+        encoded_message = self.encode(self.END_OF_MESSAGE)
+        conn.send(encoded_message)
 
     def receive(self, conn, addr):
         print(f"[NEW CONNECTION] {addr} connected.")
@@ -81,7 +81,7 @@ class ServerTCP:
                 msg = conn.recv(2048 * 8)
                 buffer += msg
 
-                if len(buffer) == length:
+                if length and len(buffer) == length:
                     readnext = False
 
                 if length is None:
@@ -95,7 +95,6 @@ class ServerTCP:
                         readnext = False
 
             buffer = buffer[:length]
-
             msg = self.decode(buffer)
             print(f"[{addr}] {msg}")
 
@@ -127,13 +126,13 @@ class ServerTCP:
 
 
 class ClientTCP:
-    def __init__(self, HEADER=64, PORT=5050, SERVER=socket.gethostbyname(socket.gethostname())):
-        self.HEADER = HEADER
-        self.PORT = PORT
+    def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, DELAY=5e-1):
         self.SERVER = SERVER
+        self.PORT = PORT
+        self.MSG_SIZE = MSG_SIZE
+        self.DELAY = DELAY
 
         self.ADDR = (SERVER, PORT)
-        self.FORMAT = "utf-8"
         self.DISCONNECT_MESSAGE = torch.tensor(float("inf"))
 
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -162,9 +161,14 @@ class ClientTCP:
 
     def send(self, tensor):
         message = self.encode(tensor)
-
         self.client.send(message)
-        self.receive()
+
+        time.sleep(self.DELAY)
+        self.send_EOT()
+
+    def send_EOT(self):
+        encoded_message = self.encode(self.DISCONNECT_MESSAGE)
+        self.client.sendto(encoded_message, self.ADDR)
 
     def receive(self):
         connected = True
@@ -177,7 +181,7 @@ class ClientTCP:
                 msg = self.client.recv(2048 * 8)
                 buffer += msg
 
-                if length and len(buffer) >= length:
+                if length and len(buffer) == length:
                     readnext = False
 
                 if length is None:
@@ -194,12 +198,10 @@ class ClientTCP:
             msg = self.decode(buffer)
             print(f"[{0000}] {msg}")
 
+            # connected = False
             if not len(msg.shape) and torch.isinf(msg):
                 connected = False
-                print(f"[DROP CONNECTION] closed")
                 self.client.send(self.encode(self.DISCONNECT_MESSAGE))
-                # conn.shutdown(1)
-                # conn.close()
                 continue
 
 
