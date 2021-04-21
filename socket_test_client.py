@@ -35,23 +35,21 @@ else:
         time_sum = 0
         for i in range(REPS):
             CHUNK = 100
-            messages = torch.cat([torch.arange(msg).unsqueeze(1), 1 * torch.arange(msg).unsqueeze(1)], dim=-1).to(torch.float32).split(CHUNK)
+            message = torch.cat([torch.arange(msg).unsqueeze(1), 1 * torch.arange(msg).unsqueeze(1)], dim=-1).to(torch.float32)
 
             start = time.time()
-            for message in messages:
-                client.send(message.clone())
-
-                import time
-                time.sleep(0.01)
-
+            client.send(message.clone())
             time_elapsed = time.time() - start
             time_sum += time_elapsed
+
             # print(time_elapsed)
 
         print("Total: ", time_sum)
         print(f"MSG: [{msg}] Avg Time: {time_sum / REPS}")
 
-        client.send(torch.tensor(float("inf")))
+        # client.send(torch.tensor([float("inf")]))
+        # client.send_EOT()
+
         import time
         time.sleep(1)
         print(client.receive())
