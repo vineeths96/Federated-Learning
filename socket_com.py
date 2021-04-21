@@ -157,20 +157,27 @@ class ClientTCP:
         print(self.client.recv(2048).decode(self.FORMAT))
 
 
+
+
+
+
+
+
 class ServerUDP:
-    def __init__(self, HEADER=64, PORT=5050, MSG_SIZE=100000, SERVER=socket.gethostbyname(socket.gethostname())):
+    def __init__(self, HEADER=64, PORT=5050, MSG_SIZE=100000, CHUNK=100, SERVER=socket.gethostbyname(socket.gethostname())):
         self.HEADER = HEADER
         self.PORT = PORT
         self.MSG_SIZE = MSG_SIZE
+        self.CHUNK = CHUNK
         self.SERVER = SERVER
         self.ADDR = (SERVER, PORT)
         self.FORMAT = "utf-8"
         self.DISCONNECT_MESSAGE = torch.tensor(float("inf"))
 
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
         # self.SEND_BUF_SIZE = 4096
         # self.RECV_BUF_SIZE = 4096
-
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # self.server.setsockopt(
         #     socket.SOL_SOCKET,
@@ -182,6 +189,9 @@ class ServerUDP:
         #     self.RECV_BUF_SIZE)
 
         self.server.bind(self.ADDR)
+
+        self.vector = None
+        # self.server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
     def encode(self, tensor):
         file = io.BytesIO()
@@ -204,7 +214,8 @@ class ServerUDP:
         readnext = True
         while readnext:
             msg, addr = self.server.recvfrom(1024 * 2)
-            self.server.sendto("Message received".encode(self.FORMAT), addr)
+            # print(msg)
+            # self.server.sendto("Message received".encode(self.FORMAT), addr)
 
             try:
                 decoded_msg = self.decode(msg)
@@ -216,6 +227,7 @@ class ServerUDP:
 
             buffer.append(decoded_msg)
 
+        # TODO Handle buffer [] case
         if len(buffer) > 1:
             msg = torch.cat(buffer)
         else:
@@ -224,40 +236,51 @@ class ServerUDP:
         print(f"[{addr}] {msg}")
         print(f"Length of message received: {msg.shape[0]}")
 
-        reference_indices = torch.arange(self.MSG_SIZE)
-        lost_indices = torch.from_numpy(np.setdiff1d(reference_indices.numpy(), msg.numpy())).to(dtype=torch.int64)
-        lost_indices_locations = torch.zeros_like(reference_indices).index_fill_(0, lost_indices, 1)
+        self.vector = msg
 
-        import datetime
+        # reference_indices = torch.arange(self.MSG_SIZE)
+        # lost_indices = torch.from_numpy(np.setdiff1d(reference_indices.numpy(), msg.numpy())).to(dtype=torch.int64)
+        # lost_indices_locations = torch.zeros_like(reference_indices).index_fill_(0, lost_indices, 1)
+        #
+        # import datetime
+        #
+        # plt.plot(reference_indices.numpy(), lost_indices_locations.numpy(), label=f'{(lost_indices.shape[0] / self.MSG_SIZE)}')
+        # plt.xlabel('Coordinate index')
+        # plt.ylabel('Lost Packet')
+        # plt.legend()
+        # plt.savefig(f'./{datetime.datetime.now()}.jpg')
+        # plt.show(block=False)
+        # plt.pause(2)
+        # plt.close()
 
-        plt.plot(reference_indices.numpy(), lost_indices_locations.numpy(), label=f'{(lost_indices.shape[0] / self.MSG_SIZE)}')
-        plt.xlabel('Coordinate index')
-        plt.ylabel('Lost Packet')
-        plt.legend()
-        plt.savefig(f'./{datetime.datetime.now()}.jpg')
-        plt.show(block=False)
-        plt.pause(2)
-        plt.close()
+        message = self.encode(torch.arange(25))
+        # print(message)
+        self.server.sendto(message, addr)
 
-        self.server.sendto("Message received".encode(self.FORMAT), addr)
+        self.server.sendto(self.encode(torch.tensor(float("inf"))), addr)
+
+        # self.server.sendto("Message received".encode(self.FORMAT), addr)
 
     def start(self):
         print(f"[LISTENING] Server is listening on {self.SERVER}")
 
-        try:
-            while True:
-                self.handle_client()
-        except KeyboardInterrupt:
-            self.stop()
+        # try:
+        #     while True:
+        #         self.handle_client()
+        # except KeyboardInterrupt:
+        #     self.stop()
+        while True:
+            self.handle_client()
 
     def stop(self):
         self.server.close()
 
 
 class ClientUDP:
-    def __init__(self, HEADER=64, PORT=5050, SERVER=socket.gethostbyname(socket.gethostname())):
+    def __init__(self, HEADER=64, PORT=5050, CHUNK=100, SERVER=socket.gethostbyname(socket.gethostname())):
         self.HEADER = HEADER
         self.PORT = PORT
+        self.CHUNK = CHUNK
         self.SERVER = SERVER
         self.ADDR = (SERVER, PORT)
         self.FORMAT = "utf-8"
@@ -286,3 +309,31 @@ class ClientUDP:
 
         # data, server = self.client.recvfrom(1024)
         # print(data.decode(self.FORMAT))
+
+    def receive(self,):
+        buffer = []
+        readnext = True
+        while readnext:
+            msg, addr = self.client.recvfrom(1024 * 2)
+            # print(msg)
+            # self.server.sendto("Message received".encode(self.FORMAT), addr)
+
+            try:
+                decoded_msg = self.decode(msg)
+            except:
+                continue
+
+            if not len(decoded_msg.shape) and torch.isinf(decoded_msg):
+                break
+
+            buffer.append(decoded_msg)
+
+        if len(buffer) > 1:
+            msg = torch.cat(buffer)
+        else:
+            print(buffer)
+            msg = buffer[0]
+
+        print(f"[{addr}] {msg}")
+        print(f"Length of message received: {msg.shape[0]}")
+

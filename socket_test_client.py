@@ -10,7 +10,7 @@ if use_TCP:
     REPS = 1
     MSG_SIZES = [1000]
     # MSG_SIZES = [1, 5, 10, 50, 100, 500, 1000, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 25e6]
-    client = ClientTCP(SERVER="10.216.18.179")
+    client = ClientTCP(SERVER="10.217.22.85")
 
     for msg in MSG_SIZES:
         time_sum = 0
@@ -27,9 +27,9 @@ if use_TCP:
         print(f"MSG: [{msg}] Avg Time: {time_sum / REPS}")
 else:
     REPS = 1
-    MSG_SIZES = [25e3]
+    MSG_SIZES = [250]
     # MSG_SIZES = [1, 5, 10, 50, 100, 500, 1000, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 25e6]
-    client = ClientUDP(SERVER="10.216.18.179")
+    client = ClientUDP(SERVER="10.217.22.85")
 
     for msg in MSG_SIZES:
         time_sum = 0
@@ -42,7 +42,7 @@ else:
                 client.send(message.clone())
 
                 import time
-                time.sleep(0.005)
+                time.sleep(0.01)
 
             time_elapsed = time.time() - start
             time_sum += time_elapsed
@@ -51,4 +51,9 @@ else:
         print("Total: ", time_sum)
         print(f"MSG: [{msg}] Avg Time: {time_sum / REPS}")
 
-client.send(torch.tensor(float("inf")))
+        client.send(torch.tensor(float("inf")))
+        import time
+        time.sleep(1)
+        print(client.receive())
+
+# client.send(torch.tensor(float("inf")))
