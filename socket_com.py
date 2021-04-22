@@ -61,53 +61,14 @@ class ServerTCP:
         encoded_message = self.encode(tensor)
         conn.send(encoded_message)
 
-        time.sleep(self.DELAY)
-        self.send_EOT(conn)
+        # time.sleep(self.DELAY)
+        # self.send_EOT(conn)
 
     def send_EOT(self, conn):
         encoded_message = self.encode(self.END_OF_MESSAGE)
         conn.send(encoded_message)
 
     def receive(self, conn, addr):
-        print(f"[NEW CONNECTION] {addr} connected.")
-
-        # connected = True
-        # while connected:
-        #     length = None
-        #     buffer = bytearray()
-        #
-        #     readnext = True
-        #     while readnext:
-        #         msg = conn.recv(2048 * 8)
-        #         buffer += msg
-        #
-        #         if length and len(buffer) == length:
-        #             break
-        #             # readnext = False
-        #
-        #         if length is None:
-        #             if b":" not in buffer:
-        #                 break
-        #
-        #             length_str, ignored, buffer = buffer.partition(b":")
-        #             length = int(length_str)
-        #
-        #             if len(buffer) == length:
-        #                 readnext = False
-        #
-        #     buffer = buffer[:length]
-        #     msg = self.decode(buffer)
-        #     print(f"[{addr}] {msg}")
-        #
-        #     if not len(msg.shape) and torch.isinf(msg):
-        #         connected = False
-        #         print(f"[DROP CONNECTION] {addr} closed")
-        #         conn.shutdown(1)
-        #         conn.close()
-        #         continue
-        #
-        #     self.send(msg, conn)
-
         length = None
         buffer = bytearray()
 
@@ -118,7 +79,6 @@ class ServerTCP:
 
             if length and len(buffer) == length:
                 break
-                # readnext = False
 
             if length is None:
                 if b":" not in buffer:
@@ -135,10 +95,8 @@ class ServerTCP:
         print(f"[{addr}] {msg}")
 
         self.send(msg, conn)
-        print(f"[DROP CONNECTION] {addr} closed")
         conn.shutdown(1)
         conn.close()
-
 
     def start(self):
         self.server.listen()
@@ -204,39 +162,30 @@ class ClientTCP:
         self.client.sendto(encoded_message, self.ADDR)
 
     def receive(self):
-        connected = True
-        while connected:
-            length = None
-            buffer = bytearray()
+        length = None
+        buffer = bytearray()
 
-            readnext = True
-            while readnext:
-                msg = self.client.recv(2048 * 8)
-                buffer += msg
+        readnext = True
+        while readnext:
+            msg = self.client.recv(2048 * 8)
+            buffer += msg
 
-                if length and len(buffer) == length:
+            if length and len(buffer) == length:
+                break
+
+            if length is None:
+                if b":" not in buffer:
                     break
-                    # readnext = False
 
-                if length is None:
-                    if b":" not in buffer:
-                        break
+                length_str, ignored, buffer = buffer.partition(b":")
+                length = int(length_str)
 
-                    length_str, ignored, buffer = buffer.partition(b":")
-                    length = int(length_str)
+                if len(buffer) == length:
+                    readnext = False
 
-                    if len(buffer) == length:
-                        readnext = False
-
-            buffer = buffer[:length]
-            msg = self.decode(buffer)
-            print(f"[{0000}] {msg}")
-
-            # connected = False
-            if not len(msg.shape) and torch.isinf(msg):
-                connected = False
-                # self.client.send(self.encode(self.DISCONNECT_MESSAGE))
-                continue
+        buffer = buffer[:length]
+        msg = self.decode(buffer)
+        print(f"[{self.ADDR}] {msg}")
 
 
 class ServerUDP:
@@ -269,8 +218,6 @@ class ServerUDP:
         self.server.bind(self.ADDR)
         buffer_size = self.server.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
         print("Buffer size [After]:%d" % buffer_size)
-
-        # self.server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
     def encode(self, tensor):
         file = io.BytesIO()
@@ -339,7 +286,6 @@ class ServerUDP:
             self.stop()
 
     def stop(self):
-        print(self.v)
         self.server.close()
 
 
@@ -357,6 +303,9 @@ class ClientUDP:
         self.END_OF_MESSAGE = torch.tensor(float("inf"))
 
         self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        buffer_size = self.client.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
+        print("Buffer size [After]:%d" % buffer_size)
 
     def encode(self, tensor):
         file = io.BytesIO()
