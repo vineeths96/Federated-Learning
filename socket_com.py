@@ -203,7 +203,7 @@ class ClientTCP:
             # connected = False
             if not len(msg.shape) and torch.isinf(msg):
                 connected = False
-                self.client.send(self.encode(self.DISCONNECT_MESSAGE))
+                # self.client.send(self.encode(self.DISCONNECT_MESSAGE))
                 continue
 
 

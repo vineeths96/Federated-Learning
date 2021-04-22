@@ -30,7 +30,7 @@ if use_TCP:
         client.receive()
 
         time.sleep(1)
-        # client.send_EOT()
+        client.send_EOT()
 else:
     REPS = 1
     MSG_SIZES = [25e5]
