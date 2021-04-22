@@ -61,8 +61,8 @@ class ServerTCP:
         encoded_message = self.encode(tensor)
         conn.send(encoded_message)
 
-        # time.sleep(self.DELAY)
-        # self.send_EOT(conn)
+        time.sleep(self.DELAY)
+        self.send_EOT(conn)
 
     def send_EOT(self, conn):
         encoded_message = self.encode(self.END_OF_MESSAGE)
@@ -83,6 +83,7 @@ class ServerTCP:
 
                 if length and len(buffer) == length:
                     break
+                    # readnext = False
 
                 if length is None:
                     if b":" not in buffer:
@@ -306,6 +307,7 @@ class ServerUDP:
             self.stop()
 
     def stop(self):
+        print(self.v)
         self.server.close()
 
 
@@ -353,13 +355,11 @@ class ClientUDP:
         encoded_message = self.encode(self.END_OF_MESSAGE)
         self.client.sendto(encoded_message, self.ADDR)
 
-    def receive(
-        self,
-    ):
+    def receive(self):
         buffer = []
         readnext = True
         while readnext:
-            msg, addr = self.client.recvfrom(2048 * 4)
+            msg, addr = self.client.recvfrom(2048 * 8)
 
             try:
                 decoded_msg = self.decode(msg)
