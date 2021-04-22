@@ -71,42 +71,74 @@ class ServerTCP:
     def receive(self, conn, addr):
         print(f"[NEW CONNECTION] {addr} connected.")
 
-        connected = True
-        while connected:
-            length = None
-            buffer = bytearray()
+        # connected = True
+        # while connected:
+        #     length = None
+        #     buffer = bytearray()
+        #
+        #     readnext = True
+        #     while readnext:
+        #         msg = conn.recv(2048 * 8)
+        #         buffer += msg
+        #
+        #         if length and len(buffer) == length:
+        #             break
+        #             # readnext = False
+        #
+        #         if length is None:
+        #             if b":" not in buffer:
+        #                 break
+        #
+        #             length_str, ignored, buffer = buffer.partition(b":")
+        #             length = int(length_str)
+        #
+        #             if len(buffer) == length:
+        #                 readnext = False
+        #
+        #     buffer = buffer[:length]
+        #     msg = self.decode(buffer)
+        #     print(f"[{addr}] {msg}")
+        #
+        #     if not len(msg.shape) and torch.isinf(msg):
+        #         connected = False
+        #         print(f"[DROP CONNECTION] {addr} closed")
+        #         conn.shutdown(1)
+        #         conn.close()
+        #         continue
+        #
+        #     self.send(msg, conn)
 
-            readnext = True
-            while readnext:
-                msg = conn.recv(2048 * 8)
-                buffer += msg
+        length = None
+        buffer = bytearray()
 
-                if length and len(buffer) == length:
+        readnext = True
+        while readnext:
+            msg = conn.recv(2048 * 8)
+            buffer += msg
+
+            if length and len(buffer) == length:
+                break
+                # readnext = False
+
+            if length is None:
+                if b":" not in buffer:
                     break
-                    # readnext = False
 
-                if length is None:
-                    if b":" not in buffer:
-                        break
+                length_str, ignored, buffer = buffer.partition(b":")
+                length = int(length_str)
 
-                    length_str, ignored, buffer = buffer.partition(b":")
-                    length = int(length_str)
+                if len(buffer) == length:
+                    readnext = False
 
-                    if len(buffer) == length:
-                        readnext = False
+        buffer = buffer[:length]
+        msg = self.decode(buffer)
+        print(f"[{addr}] {msg}")
 
-            buffer = buffer[:length]
-            msg = self.decode(buffer)
-            print(f"[{addr}] {msg}")
+        self.send(msg, conn)
+        print(f"[DROP CONNECTION] {addr} closed")
+        conn.shutdown(1)
+        conn.close()
 
-            if not len(msg.shape) and torch.isinf(msg):
-                connected = False
-                print(f"[DROP CONNECTION] {addr} closed")
-                conn.shutdown(1)
-                conn.close()
-                continue
-
-            self.send(msg, conn)
 
     def start(self):
         self.server.listen()
