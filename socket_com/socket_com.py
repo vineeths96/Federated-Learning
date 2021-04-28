@@ -6,6 +6,7 @@ import threading
 import numpy as np
 import matplotlib.pyplot as plt
 
+BUFFER = 1024 * 8 * 8
 
 class ServerTCP:
     def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, DELAY=5e-1):
@@ -74,7 +75,7 @@ class ServerTCP:
 
         readnext = True
         while readnext:
-            msg = conn.recv(2048 * 8)
+            msg = conn.recv(BUFFER)
             buffer += msg
 
             if length and len(buffer) == length:
@@ -167,7 +168,7 @@ class ClientTCP:
 
         readnext = True
         while readnext:
-            msg = self.client.recv(2048 * 8)
+            msg = self.client.recv(BUFFER)
             buffer += msg
 
             if length and len(buffer) == length:
@@ -252,7 +253,7 @@ class ServerUDP:
         buffer = []
         readnext = True
         while readnext:
-            msg, addr = self.server.recvfrom(2048 * 8)
+            msg, addr = self.server.recvfrom(BUFFER)
 
             try:
                 decoded_msg = self.decode(msg)
@@ -268,7 +269,10 @@ class ServerUDP:
         if len(buffer) > 1:
             msg = torch.cat(buffer)
         else:
-            msg = buffer[0]
+            try:
+                msg = buffer[0]
+            except:
+                print(buffer, len(buffer))
 
         print(f"[{addr}] {msg}")
         print(f"Length of message received: {msg.shape[0]}")
@@ -340,7 +344,7 @@ class ClientUDP:
         buffer = []
         readnext = True
         while readnext:
-            msg, addr = self.client.recvfrom(2048 * 8)
+            msg, addr = self.client.recvfrom(BUFFER)
 
             try:
                 decoded_msg = self.decode(msg)

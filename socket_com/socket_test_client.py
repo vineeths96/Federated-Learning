@@ -10,7 +10,7 @@ if use_TCP:
     REPS = 1
     MSG_SIZES = [25e5]
     # MSG_SIZES = [1, 5, 10, 50, 100, 500, 1000, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 25e6]
-    client = ClientTCP(SERVER="10.216.18.179", DELAY=0)
+    client = ClientTCP(SERVER="10.221.25.148", DELAY=0)
 
     for msg in MSG_SIZES:
         time_sum = 0
@@ -30,9 +30,10 @@ if use_TCP:
         client.receive()
 else:
     REPS = 1
-    MSG_SIZES = [25e6]
+    MSG_SIZES = [25e5]
     # MSG_SIZES = [1, 5, 10, 50, 100, 500, 1000, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 25e6]
-    client = ClientUDP(SERVER="10.216.18.179", CHUNK=1000, DELAY=1e-6)
+    # client = ClientUDP(SERVER="10.216.18.179", CHUNK=10 * 2 * 250, DELAY=0e-6)
+    client = ClientUDP(SERVER="10.32.50.26", CHUNK=10 * 2 * 250, DELAY=0e-6)
 
     for msg in MSG_SIZES:
         time_sum = 0
