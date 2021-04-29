@@ -1,16 +1,12 @@
 import time
 import torch
-from socket_com import ClientTCP, ClientUDP
+from TCPSocket import ClientTCP
+from UDPSocket import ClientUDP
+from parameters import *
 
-
-# use_TCP = True
-use_TCP = False
 
 if use_TCP:
-    REPS = 1
-    MSG_SIZES = [25e5]
-    # MSG_SIZES = [1, 5, 10, 50, 100, 500, 1000, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 25e6]
-    client = ClientTCP(SERVER="10.221.25.148", DELAY=0)
+    client = ClientTCP(SERVER=SERVER, DELAY=DELAY)
 
     for msg in MSG_SIZES:
         time_sum = 0
@@ -29,11 +25,7 @@ if use_TCP:
 
         client.receive()
 else:
-    REPS = 1
-    MSG_SIZES = [25e5]
-    # MSG_SIZES = [1, 5, 10, 50, 100, 500, 1000, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 25e6]
-    # client = ClientUDP(SERVER="10.216.18.179", CHUNK=10 * 2 * 250, DELAY=0e-6)
-    client = ClientUDP(SERVER="10.32.50.26", CHUNK=10 * 2 * 250, DELAY=0e-6)
+    client = ClientUDP(SERVER=SERVER, CHUNK=CHUNK, DELAY=DELAY)
 
     for msg in MSG_SIZES:
         time_sum = 0
@@ -44,6 +36,8 @@ else:
 
             start = time.time()
             client.send(message.clone())
+            # client.receive()
+            client.receive_TCP_EOT()
             time_elapsed = time.time() - start
             time_sum += time_elapsed
 
