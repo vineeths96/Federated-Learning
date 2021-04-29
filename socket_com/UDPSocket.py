@@ -103,6 +103,7 @@ class ServerUDP:
         print(f"[{addr}] {msg}")
         print(f"Length of message received: {msg.shape[0]}")
 
+        # Uncomment
         # time.sleep(self.DELAY)
         # self.send(msg, addr)
 

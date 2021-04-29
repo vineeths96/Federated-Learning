@@ -95,23 +95,31 @@ class ServerTCP:
         msg = self.decode(buffer)
         print(f"[{addr}] {msg}")
 
-        self.send(msg, conn)
-        conn.shutdown(1)
-        conn.close()
+        # Uncomment
+        # self.send(msg, conn)
+        # conn.shutdown(1)
+        # conn.close()
 
-        # self.stop()
-        # return
+        self.stop()
+        return
 
     def start(self):
         self.server.listen()
         print(f"[LISTENING] Server is listening on {self.SERVER}")
 
         try:
-            while True:
-                conn, addr = self.server.accept()
-                thread = threading.Thread(target=self.receive, args=(conn, addr))
-                thread.start()
-                print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+            # Uncomment
+            # while True:
+            #     conn, addr = self.server.accept()
+            #     thread = threading.Thread(target=self.receive, args=(conn, addr))
+            #     thread.start()
+            #     print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+
+            # while True:
+            conn, addr = self.server.accept()
+            thread = threading.Thread(target=self.receive, args=(conn, addr))
+            thread.start()
+            print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
         except KeyboardInterrupt:
             self.stop()
 

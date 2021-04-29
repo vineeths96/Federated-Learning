@@ -36,7 +36,6 @@ else:
 
             start = time.time()
             client.send(message.clone())
-            # client.receive()
             client.receive_TCP_EOT()
             time_elapsed = time.time() - start
             time_sum += time_elapsed
@@ -44,4 +43,5 @@ else:
         print("Total: ", time_sum)
         print(f"MSG: [{msg}] Avg Time: {time_sum / REPS}")
 
-        client.receive()
+        # Uncomment
+        # client.receive()
