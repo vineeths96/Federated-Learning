@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from parameters import *
 
 
-class ServerTCP:
+class TCPServer:
     def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, DELAY=5e-1):
         self.SERVER = SERVER
         self.PORT = PORT
@@ -95,31 +95,30 @@ class ServerTCP:
         msg = self.decode(buffer)
         print(f"[{addr}] {msg}")
 
-        # Uncomment
-        # self.send(msg, conn)
-        # conn.shutdown(1)
-        # conn.close()
-
-        self.stop()
-        return
+        if not UDP_DEBUG:
+            self.send(msg, conn)
+            conn.shutdown(1)
+            conn.close()
+        else:
+            self.stop()
+            return
 
     def start(self):
         self.server.listen()
         print(f"[LISTENING] Server is listening on {self.SERVER}")
 
         try:
-            # Uncomment
-            # while True:
-            #     conn, addr = self.server.accept()
-            #     thread = threading.Thread(target=self.receive, args=(conn, addr))
-            #     thread.start()
-            #     print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
-
-            # while True:
-            conn, addr = self.server.accept()
-            thread = threading.Thread(target=self.receive, args=(conn, addr))
-            thread.start()
-            print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+            if not UDP_DEBUG:
+                while True:
+                    conn, addr = self.server.accept()
+                    thread = threading.Thread(target=self.receive, args=(conn, addr))
+                    thread.start()
+                    print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+            else:
+                conn, addr = self.server.accept()
+                thread = threading.Thread(target=self.receive, args=(conn, addr))
+                thread.start()
+                print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
         except KeyboardInterrupt:
             self.stop()
 
@@ -128,7 +127,7 @@ class ServerTCP:
         self.server.close()
 
 
-class ClientTCP:
+class TCPClient:
     def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, DELAY=5e-1):
         self.SERVER = SERVER
         self.PORT = PORT

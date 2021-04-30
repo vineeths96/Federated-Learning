@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from parameters import *
 
 
-class ServerUDP:
+class UDPServer:
     def __init__(
         self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, CHUNK=100, DELAY=5e-4
     ):
@@ -69,9 +69,9 @@ class ServerUDP:
         self.server.sendto(encoded_message, addr)
 
     def send_TCP_EOT(self):
-        from TCPSocket import ClientTCP
+        from TCPSocket import TCPClient
 
-        clientTCP = ClientTCP(SERVER="10.216.18.179", MSG_SIZE=MSG_SIZE, DELAY=DELAY)
+        clientTCP = TCPClient(SERVER=SERVER_COMP, MSG_SIZE=MSG_SIZE, DELAY=DELAY)
         clientTCP.send(self.END_OF_MESSAGE)
 
     def receive(self):
@@ -86,7 +86,6 @@ class ServerUDP:
                 continue
 
             if not len(decoded_msg.shape) and torch.isinf(decoded_msg):
-                print(decoded_msg)
                 break
 
             buffer.append(decoded_msg)
@@ -103,11 +102,11 @@ class ServerUDP:
         print(f"[{addr}] {msg}")
         print(f"Length of message received: {msg.shape[0]}")
 
-        # Uncomment
-        # time.sleep(self.DELAY)
-        # self.send(msg, addr)
-
-        self.send_TCP_EOT()
+        if not UDP_DEBUG:
+            time.sleep(self.DELAY)
+            self.send(msg, addr)
+        else:
+            self.send_TCP_EOT()
 
     def start(self):
         print(f"[LISTENING] Server is listening on {self.SERVER}")
@@ -122,7 +121,7 @@ class ServerUDP:
         self.server.close()
 
 
-class ClientUDP:
+class UDPClient:
     def __init__(
         self, SERVER=socket.gethostbyname(socket.gethostname()), MSG_SIZE=100000, PORT=5050, CHUNK=100, DELAY=5e-4
     ):
@@ -155,13 +154,25 @@ class ClientUDP:
         return tensor
 
     def send(self, tensor):
+        import time
+        start = time.time()
         messages = tensor.split(self.CHUNK)
+        print("Split Time", time.time() - start)
 
+        encode_time = 0
+        send_time = 0
         for message in messages:
+            start = time.time()
             encoded_message = self.encode(message.clone())
+            encode_time += time.time() - start
+            start = time.time()
             self.client.sendto(encoded_message, self.ADDR)
+            send_time += time.time() - start
 
             time.sleep(self.DELAY)
+
+        print("Encode time", encode_time)
+        print("Send time", send_time)
 
         self.send_EOT()
 
@@ -195,7 +206,7 @@ class ClientUDP:
         print(f"Length of message received: {msg.shape[0]}")
 
     def receive_TCP_EOT(self):
-        from TCPSocket import ServerTCP
+        from TCPSocket import TCPServer
 
-        server = ServerTCP(SERVER="10.216.18.179", MSG_SIZE=MSG_SIZE, DELAY=DELAY)
+        server = TCPServer(SERVER=SERVER_COMP, MSG_SIZE=MSG_SIZE, DELAY=DELAY)
         server.start()

@@ -1,8 +1,10 @@
-from TCPSocket import ServerTCP
-from UDPSocket import ServerUDP
+from TCPSocket import TCPServer
+from UDPSocket import UDPServer
 from parameters import *
 
-# server = ServerTCP(SERVER=SERVER, MSG_SIZE=MSG_SIZE, DELAY=DELAY)
-server = ServerUDP(SERVER=SERVER, MSG_SIZE=MSG_SIZE, CHUNK=CHUNK, DELAY=DELAY)
+if use_TCP:
+    server = TCPServer(SERVER=SERVER, MSG_SIZE=MSG_SIZE, DELAY=DELAY)
+else:
+    server = UDPServer(SERVER=SERVER, MSG_SIZE=MSG_SIZE, CHUNK=CHUNK, DELAY=DELAY)
 
 server.start()
