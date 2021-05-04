@@ -5,7 +5,9 @@ import socket
 import threading
 import numpy as np
 import matplotlib.pyplot as plt
-from parameters import *
+# from parameters import *
+UDP_DEBUG=False
+BUFFER = 1024 * 16 * 4
 
 
 class UDPServer:
@@ -154,25 +156,13 @@ class UDPClient:
         return tensor
 
     def send(self, tensor):
-        import time
-        start = time.time()
         messages = tensor.split(self.CHUNK)
-        print("Split Time", time.time() - start)
 
-        encode_time = 0
-        send_time = 0
         for message in messages:
-            start = time.time()
             encoded_message = self.encode(message.clone())
-            encode_time += time.time() - start
-            start = time.time()
             self.client.sendto(encoded_message, self.ADDR)
-            send_time += time.time() - start
 
             time.sleep(self.DELAY)
-
-        print("Encode time", encode_time)
-        print("Send time", send_time)
 
         self.send_EOT()
 
@@ -202,8 +192,10 @@ class UDPClient:
         else:
             msg = buffer[0]
 
-        print(f"[{addr}] {msg}")
-        print(f"Length of message received: {msg.shape[0]}")
+        # print(f"[{addr}] {msg}")
+        # print(f"Length of message received: {msg.shape[0]}")
+
+        return msg
 
     def receive_TCP_EOT(self):
         from TCPSocket import TCPServer

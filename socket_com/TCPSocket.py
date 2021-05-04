@@ -5,7 +5,9 @@ import socket
 import threading
 import numpy as np
 import matplotlib.pyplot as plt
-from parameters import *
+# from parameters import *
+UDP_DEBUG=False
+BUFFER = 1024 * 16 * 4
 
 
 class TCPServer:
@@ -77,21 +79,41 @@ class TCPServer:
         while readnext:
             msg = conn.recv(BUFFER)
             buffer += msg
+            # print(msg)
 
-            if length and len(buffer) == length:
+            if len(buffer) == length:
+                print(length)
                 break
 
-            if length is None:
-                if b":" not in buffer:
+            while True:
+                if length is None:
+                    if b':' not in buffer:
+                        break
+
+                    length_str, ignored, buffer = buffer.partition(b':')
+                    length = int(length_str)
+
+                if len(buffer) < length:
                     break
 
-                length_str, ignored, buffer = buffer.partition(b":")
-                length = int(length_str)
+                print(length, len(buffer))
+                buffer = buffer[length:]
+                print(length, len(buffer))
 
-                if len(buffer) == length:
-                    readnext = False
+                length = None
+                break
 
-        buffer = buffer[:length]
+            # if length is None:
+            #     if b":" not in buffer:
+            #         break
+            #
+            #     length_str, ignored, buffer = buffer.partition(b":")
+            #     length = int(length_str)
+            #
+            #     if len(buffer) == length:
+            #         readnext = False
+
+        # buffer = buffer[:length]
         msg = self.decode(buffer)
         print(f"[{addr}] {msg}")
 
@@ -181,19 +203,44 @@ class TCPClient:
             msg = self.client.recv(BUFFER)
             buffer += msg
 
-            if length and len(buffer) == length:
+            if len(buffer) == length:
+                print(length)
                 break
 
-            if length is None:
-                if b":" not in buffer:
+            while True:
+                if length is None:
+                    if b':' not in buffer:
+                        break
+
+                    length_str, ignored, buffer = buffer.partition(b':')
+                    length = int(length_str)
+
+                if len(buffer) < length:
                     break
 
-                length_str, ignored, buffer = buffer.partition(b":")
-                length = int(length_str)
+                print(length, len(buffer))
+                buffer = buffer[length:]
+                print(length, len(buffer))
 
-                if len(buffer) == length:
-                    readnext = False
+                length = None
+                break
 
-        buffer = buffer[:length]
+        #
+        #     if length and len(buffer) == length:
+        #         break
+        #
+        #     if length is None:
+        #         if b":" not in buffer:
+        #             break
+        #
+        #         length_str, ignored, buffer = buffer.partition(b":")
+        #         length = int(length_str)
+        #
+        #         if len(buffer) == length:
+        #             readnext = False
+
+        # buffer = buffer[:length]
         msg = self.decode(buffer)
-        print(f"[{self.ADDR}] {msg}")
+        # print(f"[{self.ADDR}] {msg}")
+
+        return msg
