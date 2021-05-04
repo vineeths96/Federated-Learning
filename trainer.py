@@ -9,51 +9,61 @@ import torch.distributed as dist
 
 from model_dispatcher import CIFAR
 from reducer import (
-    NoneReducer,
+    # NoneReducer,
     NoneAllReducer,
-    QSGDReducer,
-    QSGDWECReducer,
-    QSGDWECModReducer,
-    TernGradReducer,
-    TernGradModReducer,
-    QSGDMaxNormReducer,
-    # QSGDBPReducer,
-    # QSGDBPAllReducer,
-    GlobalRandKMaxNormReducer,
-    MaxNormGlobalRandKReducer,
-    NUQSGDModReducer,
-    NUQSGDMaxNormReducer,
-    TopKReducer,
-    TopKReducerRatio,
-    GlobalTopKReducer,
-    GlobalTopKReducerRatio,
-    QSGDMaxNormBiasedReducer,
-    QSGDMaxNormBiasedMemoryReducer,
-    NUQSGDMaxNormBiasedReducer,
-    NUQSGDMaxNormBiasedMemoryReducer,
-    QSGDMaxNormTwoScaleReducer,
-    GlobalRandKMaxNormTwoScaleReducer,
-    QSGDMaxNormMultiScaleReducer,
-    RankKReducer,
+    # QSGDReducer,
+    # QSGDWECReducer,
+    # QSGDWECModReducer,
+    # TernGradReducer,
+    # TernGradModReducer,
+    # QSGDMaxNormReducer,
+    # # QSGDBPReducer,
+    # # QSGDBPAllReducer,
+    # GlobalRandKMaxNormReducer,
+    # MaxNormGlobalRandKReducer,
+    # NUQSGDModReducer,
+    # NUQSGDMaxNormReducer,
+    # TopKReducer,
+    # TopKReducerRatio,
+    # GlobalTopKReducer,
+    # GlobalTopKReducerRatio,
+    # QSGDMaxNormBiasedReducer,
+    # QSGDMaxNormBiasedMemoryReducer,
+    # NUQSGDMaxNormBiasedReducer,
+    # NUQSGDMaxNormBiasedMemoryReducer,
+    # QSGDMaxNormTwoScaleReducer,
+    # GlobalRandKMaxNormTwoScaleReducer,
+    # QSGDMaxNormMultiScaleReducer,
+    # RankKReducer,
 )
 from timer import Timer
 from logger import Logger
 from metrics import AverageMeter
 
+from socket_com.UDPSocket import UDPClient
+from socket_com.TCPSocket import TCPClient
+
+
 config = dict(
-    distributed_backend="nccl",
-    num_epochs=150,
+    num_epochs=1,
     batch_size=128,
+    communication = "TCP",
+    # communication="UDP",
+    server_address = "10.32.50.26",
+    # communication="UDP",
     # architecture="ResNet50",
     architecture="VGG16",
+    message_size = {"ResNet50": 23520842, "VGG16": 14728266},
     local_steps=1,
+    chunk=2000,
+    delay=0,
     # K=10000,
     # compression=1/1000,
     # quantization_level=6,
     # higher_quantization_level=10,
     # quantization_levels=[6, 10, 16],
-    rank=1,
-    reducer="RankKReducer",
+    # rank=1,
+    reducer="NoneAllReducer",
     seed=42,
     log_verbosity=2,
     lr=0.1,
@@ -61,19 +71,22 @@ config = dict(
 
 
 def initiate_distributed():
-    env_dict = {key: os.environ[key] for key in ("MASTER_ADDR", "MASTER_PORT", "RANK", "WORLD_SIZE")}
+    print(f"[{os.getpid()}] Initializing Distributed Group with: {config['server_address']}")
 
-    print(f"[{os.getpid()}] Initializing Process Group with: {env_dict}")
-    dist.init_process_group(backend=config["distributed_backend"], init_method="env://")
+    if config['communication'] == "TCP":
+        client = TCPClient(SERVER=config['server_address'], MSG_SIZE= config['message_size'][config['architecture']], DELAY=config['delay'])
+    elif config['communication'] == "UDP":
+        client = UDPClient(SERVER=config['server_address'], MSG_SIZE= config['message_size'][config['architecture']], CHUNK=config['chunk'], DELAY=config['delay'])
+    else:
+        raise NotImplementedError("Communication method not implemented.")
 
     print(
-        f"[{os.getpid()}] Initialized Process Group with: RANK = {dist.get_rank()}, "
-        + f"WORLD_SIZE = {dist.get_world_size()}"
-        + f", backend={dist.get_backend()}"
+        f"[{os.getpid()}] Initialized Distributed Group with: SERVER = {config['server_address']}"
+        + f", backend={config['communication']}"
     )
 
 
-def train(local_rank):
+def train(local_rank=0):
     logger = Logger(config, local_rank)
 
     # torch.manual_seed(config["seed"] + local_rank)
@@ -90,7 +103,7 @@ def train(local_rank):
         "TernGradReducer",
         "TernGradModReducer",
     ]:
-        reducer = globals()[config["reducer"]](device, timer)
+        reducer = globals()[config["reducer"]](config, device, timer)
     elif config["reducer"] in [
         "QSGDReducer",
         "QSGDWECReducer",
@@ -234,11 +247,5 @@ def train(local_rank):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--local_rank", type=int, default=0)
-    parser.add_argument("--local_world_size", type=int, default=1)
-    args = parser.parse_args()
-    local_rank = args.local_rank
-
-    initiate_distributed()
-    train(local_rank)
+    # client = initiate_distributed()
+    train()

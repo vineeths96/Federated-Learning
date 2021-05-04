@@ -64,16 +64,17 @@ class CIFAR:
         return model
 
     def train_dataloader(self, batch_size=32):
-        train_sampler = DistributedSampler(dataset=self._train_set)
-        train_sampler.set_epoch(self._epoch)
+        # train_sampler = DistributedSampler(dataset=self._train_set)
+        # train_sampler.set_epoch(self._epoch)
 
         train_loader = DataLoader(
             dataset=self._train_set,
             batch_size=batch_size,
-            sampler=train_sampler,
+            shuffle=True,
+            # sampler=train_sampler,
             pin_memory=True,
             drop_last=True,
-            num_workers=dist.get_world_size(),
+            num_workers=0,
         )
 
         self.len_train_loader = len(train_loader)
@@ -86,37 +87,18 @@ class CIFAR:
 
         self._epoch += 1
 
-    def auxiliary_train_dataloader(self, batch_size=32):
-        train_sampler = DistributedSampler(dataset=self._train_set)
-        train_sampler.set_epoch(self._epoch)
-
-        train_loader = DataLoader(
-            dataset=self._train_set,
-            batch_size=batch_size,
-            sampler=train_sampler,
-            pin_memory=True,
-            drop_last=True,
-            num_workers=dist.get_world_size(),
-        )
-
-        self.len_aux_train_loader = len(train_loader)
-
-        for imgs, labels in train_loader:
-            imgs = imgs.to(self._device)
-            labels = labels.to(self._device)
-
-            yield imgs, labels
 
     def test_dataloader(self, batch_size=32):
-        test_sampler = DistributedSampler(dataset=self._test_set)
+        # test_sampler = DistributedSampler(dataset=self._test_set)
 
         test_loader = DataLoader(
             dataset=self._test_set,
             batch_size=batch_size,
-            sampler=test_sampler,
+            shuffle=True,
+            # sampler=test_sampler,
             pin_memory=True,
             drop_last=True,
-            num_workers=dist.get_world_size(),
+            num_workers=0,
         )
 
         self.len_test_loader = len(test_loader)
