@@ -11,6 +11,7 @@ from model_dispatcher import CIFAR
 from reducer import (
     # NoneReducer,
     NoneAllReducer,
+    GlobalRandKReducer
     # QSGDReducer,
     # QSGDWECReducer,
     # QSGDWECModReducer,
@@ -47,8 +48,8 @@ from socket_com.TCPSocket import TCPClient
 config = dict(
     num_epochs=1,
     batch_size=128,
-    communication = "TCP",
-    # communication="UDP",
+    # communication = "TCP",
+    communication="UDP",
     server_address = "10.32.50.26",
     # communication="UDP",
     # architecture="ResNet50",
@@ -56,14 +57,14 @@ config = dict(
     message_size = {"ResNet50": 23520842, "VGG16": 14728266},
     local_steps=1,
     chunk=2000,
-    delay=0,
-    # K=10000,
+    delay=0e-6,
+    K=10000,
     # compression=1/1000,
     # quantization_level=6,
     # higher_quantization_level=10,
     # quantization_levels=[6, 10, 16],
     # rank=1,
-    reducer="NoneAllReducer",
+    reducer="GlobalRandKReducer",
     seed=42,
     log_verbosity=2,
     lr=0.1,
@@ -130,8 +131,8 @@ def train(local_rank=0):
             K=config["K"],
             quantization_level=config["quantization_level"],
         )
-    elif config["reducer"] in ["TopKReducer", "GlobalTopKReducer"]:
-        reducer = globals()[config["reducer"]](device, timer, K=config["K"])
+    elif config["reducer"] in ["TopKReducer", "GlobalTopKReducer", "GlobalRandKReducer"]:
+        reducer = globals()[config["reducer"]](config, device, timer)
     elif config["reducer"] in ["TopKReducerRatio", "GlobalTopKReducerRatio"]:
         reducer = globals()[config["reducer"]](device, timer, compression=config["compression"])
     elif config["reducer"] in ["QSGDMaxNormTwoScaleReducer"]:
