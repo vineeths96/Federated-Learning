@@ -1,5 +1,7 @@
 import torch
 import torch.distributed
+import numpy as np
+
 
 from compressors import (
     NoneCompressor,
@@ -94,8 +96,10 @@ class NoneAllReducer(Reducer):
                 raise NotImplementedError("Communication method not implemented.")
 
             client.send(flat_grad.buffer.clone())
-            received = client.receive()
-            print(received)
+            aggregated_grad = client.receive()
+
+            # print(aggregated_grad)
+            flat_grad.buffer[:] = aggregated_grad
 
             for out in grad_out:
                 out[:] = 0.0
@@ -106,6 +110,84 @@ class NoneAllReducer(Reducer):
                 out.add_(other=grad)
 
             bits_communicated += self.n_bits(flat_grad.buffer)
+
+        return bits_communicated
+
+    def n_bits(self, tensor):
+        return 8 * tensor.nelement() * tensor.element_size()
+
+
+class GlobalRandKReducer(Reducer):
+    """
+    All reduce reducer random K indices.
+    """
+
+    def __init__(self, config, device, timer):
+        super(GlobalRandKReducer, self).__init__(device, timer)
+        self._config = config
+        self._K = config['K']
+        self._indices_queue = []
+
+    def reduce(self, grad_in, grad_out):
+        bits_communicated = 0
+
+        with self._timer("reduce.flat_pack"):
+            flat_grad = TensorBuffer(grad_in)
+
+        if not self._indices_queue:
+            self._indices_queue = torch.randperm(len(flat_grad.buffer)).split(self._K)
+            self._indices_queue = list(self._indices_queue)
+
+        RandK_indices = self._indices_queue.pop().long().to(self._device)
+        RandK_flat_grad = flat_grad.buffer[RandK_indices]
+
+        with self._timer("reduce.allreduce_K", verbosity=2):
+            if self._config['communication'] == "TCP":
+                client = TCPClient(SERVER=self._config['server_address'],
+                                   MSG_SIZE=self._config['message_size'][self._config['architecture']], DELAY=self._config['delay'])
+            elif self._config['communication'] == "UDP":
+                client = UDPClient(SERVER=self._config['server_address'],
+                                   MSG_SIZE=self._config['message_size'][self._config['architecture']], CHUNK=self._config['chunk'],
+                                   DELAY=self._config['delay'])
+            else:
+                raise NotImplementedError("Communication method not implemented.")
+
+            RandK_indices_grad = torch.vstack([RandK_indices, RandK_flat_grad]).T
+
+            client.send(RandK_indices_grad.clone())
+            aggregated_RandK_indices_grad = client.receive()
+
+            aggregated_RandK_indices = aggregated_RandK_indices_grad[:, 0]
+            aggregated_RandK_grad = aggregated_RandK_indices_grad[:, 1]
+
+            received_coordinates = torch.tensor(np.intersect1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy()))
+            received_coordinates_fraction = received_coordinates.nelement() / self._config['K']
+
+            try:
+                aggregated_RandK_grad = 1 / received_coordinates_fraction * aggregated_RandK_grad
+            except:
+                print(aggregated_RandK_indices_grad.shape)
+                print(received_coordinates_fraction)
+                exit(333)
+
+            nonreceived_coordinates = torch.tensor(np.setdiff1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy()))
+
+            if RandK_indices.nelement() == received_coordinates.unique().nelement() + nonreceived_coordinates.unique().nelement():
+                print(RandK_indices.nelement() == received_coordinates.nelement() + nonreceived_coordinates.nelement())
+            else:
+                print(RandK_indices.nelement(), received_coordinates.unique().nelement(), nonreceived_coordinates.unique().nelement())
+                exit(55)
+
+        with self._timer("reduce.setgrad", verbosity=2):
+            flat_grad.buffer[aggregated_RandK_indices.long()] = aggregated_RandK_grad
+
+            for out in grad_out:
+                out[:] = 0.0
+
+            for grad, out in zip(flat_grad, grad_out):
+                # TODO Average or Sum
+                grad = grad.to(self._device)
+                out.add_(other=grad, alpha=1)
 
         return bits_communicated
 
