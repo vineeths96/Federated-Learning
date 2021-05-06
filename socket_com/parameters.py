@@ -15,5 +15,5 @@ use_TCP = True
 UDP_DEBUG = False
 
 REPS = 1
-MSG_SIZES = [25e3]
+MSG_SIZES = [100]
 # MSG_SIZES = [1, 5, 10, 50, 100, 500, 1000, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 25e6]

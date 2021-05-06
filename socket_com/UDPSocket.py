@@ -138,8 +138,8 @@ class UDPClient:
 
         self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-        buffer_size = self.client.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
-        print("Buffer size [After]:%d" % buffer_size)
+        # buffer_size = self.client.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
+        # print("Buffer size [After]:%d" % buffer_size)
 
     def encode(self, tensor):
         file = io.BytesIO()

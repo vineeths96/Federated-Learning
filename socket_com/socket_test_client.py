@@ -17,7 +17,7 @@ if use_TCP:
 
             start = time.time()
             client.send(message)
-            client.receive()
+            print(client.receive())
             time_elapsed = time.time() - start
             time_sum += time_elapsed
 

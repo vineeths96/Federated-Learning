@@ -79,10 +79,8 @@ class TCPServer:
         while readnext:
             msg = conn.recv(BUFFER)
             buffer += msg
-            # print(msg)
 
             if len(buffer) == length:
-                print(length)
                 break
 
             while True:
@@ -96,23 +94,21 @@ class TCPServer:
                 if len(buffer) < length:
                     break
 
-                print(length, len(buffer))
                 buffer = buffer[length:]
-                print(length, len(buffer))
 
                 length = None
                 break
 
-            # if length is None:
-            #     if b":" not in buffer:
-            #         break
-            #
-            #     length_str, ignored, buffer = buffer.partition(b":")
-            #     length = int(length_str)
-            #
-            #     if len(buffer) == length:
-            #         readnext = False
-
+        #     if length is None:
+        #         if b":" not in buffer:
+        #             break
+        #
+        #         length_str, ignored, buffer = buffer.partition(b":")
+        #         length = int(length_str)
+        #
+        #         if len(buffer) == length:
+        #             readnext = False
+        #
         # buffer = buffer[:length]
         msg = self.decode(buffer)
         print(f"[{addr}] {msg}")
@@ -204,7 +200,6 @@ class TCPClient:
             buffer += msg
 
             if len(buffer) == length:
-                print(length)
                 break
 
             while True:
@@ -218,9 +213,7 @@ class TCPClient:
                 if len(buffer) < length:
                     break
 
-                print(length, len(buffer))
                 buffer = buffer[length:]
-                print(length, len(buffer))
 
                 length = None
                 break
