@@ -19,6 +19,7 @@ class UDPServer:
 
         self.NUM_CLIENTS = NUM_CLIENTS
         self.MSG_SIZE = MSG_SIZE
+        self.GRADIENT_SIZE = GRADIENT_SIZE
         self.CHUNK = CHUNK
         self.DELAY = DELAY
 
@@ -46,7 +47,7 @@ class UDPServer:
 
         torch.manual_seed(42)
         self._indices_queue = []
-        self.accumulated_gradient = torch.zeros([MSG_SIZE, 2])
+        self.accumulated_gradient = torch.zeros(self.GRADIENT_SIZE)
 
     def encode(self, tensor):
         file = io.BytesIO()
@@ -136,13 +137,14 @@ class UDPServer:
                     continue
 
                 if not self._indices_queue:
-                    self._indices_queue = torch.randperm(len(flat_grad.buffer)).split(self._K)
+                    self._indices_queue = torch.randperm(self.GRADIENT_SIZE).split(self.MSG_SIZE)
                     self._indices_queue = list(self._indices_queue)
 
                 RandK_indices = self._indices_queue.pop().long()
+                RandK_flat_grad = self.accumulated_gradient[RandK_indices]
 
                 for client in self.DEVICES:
-                    accumulated_grad_indices = torch.vstack([RandK_indices, self.accumulated_gradient]).T
+                    accumulated_grad_indices = torch.vstack([RandK_indices, RandK_flat_grad]).T
                     self.send(accumulated_grad_indices, client)
 
                 self.DEVICES = []
