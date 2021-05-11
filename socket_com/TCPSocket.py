@@ -11,9 +11,11 @@ BUFFER = 1024 * 16 * 4
 
 
 class TCPServer:
-    def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, DELAY=5e-1):
+    def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, NUM_CLIENTS=1, MSG_SIZE=100000, DELAY=5e-1):
         self.SERVER = SERVER
         self.PORT = PORT
+
+        self.NUM_CLIENTS = NUM_CLIENTS
         self.MSG_SIZE = MSG_SIZE
         self.DELAY = DELAY
 
@@ -101,17 +103,6 @@ class TCPServer:
                 length = None
                 break
 
-        #     if length is None:
-        #         if b":" not in buffer:
-        #             break
-        #
-        #         length_str, ignored, buffer = buffer.partition(b":")
-        #         length = int(length_str)
-        #
-        #         if len(buffer) == length:
-        #             readnext = False
-        #
-        # buffer = buffer[:length]
         msg = self.decode(buffer)
         print(f"[{addr}] {msg}")
 
@@ -147,17 +138,14 @@ class TCPServer:
                     thread.join()
                     # print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
-                    print(self.accumulated_gradient)
-                    if threading.activeCount() == 1 and client_count == 2:
-                        # print("s", clients)
-                        for conn in clients:
-                            # print(conn)
-                            self.send(self.accumulated_gradient, conn)
-                            conn.shutdown(1)
-                            conn.close()
+                    if threading.activeCount() == 1 and client_count == self.NUM_CLIENTS:
+                        for client in clients:
+                            print(clients)
+                            self.send(self.accumulated_gradient, client)
+                            client.shutdown(1)
+                            client.close()
 
-                            clients.remove(conn)
-
+                        clients = []
                         client_count = 0
                         self.accumulated_gradient.zero_()
             else:
@@ -246,22 +234,6 @@ class TCPClient:
                 length = None
                 break
 
-        #
-        #     if length and len(buffer) == length:
-        #         break
-        #
-        #     if length is None:
-        #         if b":" not in buffer:
-        #             break
-        #
-        #         length_str, ignored, buffer = buffer.partition(b":")
-        #         length = int(length_str)
-        #
-        #         if len(buffer) == length:
-        #             readnext = False
-
-        # buffer = buffer[:length]
         msg = self.decode(buffer)
-        # print(f"[{self.ADDR}] {msg}")
 
         return msg
