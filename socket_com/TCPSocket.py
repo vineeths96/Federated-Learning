@@ -39,6 +39,8 @@ class TCPServer:
         buffer_size = self.server.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
         print("Buffer size [After]:%d" % buffer_size)
 
+        self.accumulated_gradient = torch.zeros(MSG_SIZE)
+
     def encode(self, tensor):
         file = io.BytesIO()
         torch.save(tensor, file)
@@ -114,9 +116,14 @@ class TCPServer:
         print(f"[{addr}] {msg}")
 
         if not UDP_DEBUG:
-            self.send(msg, conn)
-            conn.shutdown(1)
-            conn.close()
+            indices = msg[:, 0].long()
+            gradient = msg[:, 1]
+            self.accumulated_gradient[indices] += gradient
+
+            # self.send(msg, conn)
+            # conn.shutdown(1)
+            # conn.close()
+            return
         else:
             self.stop()
             return
@@ -127,11 +134,32 @@ class TCPServer:
 
         try:
             if not UDP_DEBUG:
+                clients = []
+                client_count = 0
+
                 while True:
                     conn, addr = self.server.accept()
+                    clients.append(conn)
+                    client_count += 1
+
                     thread = threading.Thread(target=self.receive, args=(conn, addr))
                     thread.start()
-                    print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+                    thread.join()
+                    # print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+
+                    print(self.accumulated_gradient)
+                    if threading.activeCount() == 1 and client_count == 2:
+                        # print("s", clients)
+                        for conn in clients:
+                            # print(conn)
+                            self.send(self.accumulated_gradient, conn)
+                            conn.shutdown(1)
+                            conn.close()
+
+                            clients.remove(conn)
+
+                        client_count = 0
+                        self.accumulated_gradient.zero_()
             else:
                 conn, addr = self.server.accept()
                 thread = threading.Thread(target=self.receive, args=(conn, addr))
