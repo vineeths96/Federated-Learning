@@ -12,7 +12,7 @@ BUFFER = 1024 * 16 * 4
 
 class UDPServer:
     def __init__(
-        self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, NUM_CLIENTS=1, MSG_SIZE=100000, CHUNK=100, DELAY=5e-4
+        self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, NUM_CLIENTS=1, MSG_SIZE=100000, GRADIENT_SIZE=23520842, CHUNK=100, DELAY=5e-4
     ):
         self.SERVER = SERVER
         self.PORT = PORT
@@ -26,7 +26,6 @@ class UDPServer:
         self.END_OF_MESSAGE = torch.tensor(float("inf"))
 
         self.DEVICES = []
-
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # self.SEND_BUF_SIZE = 4096
@@ -45,7 +44,9 @@ class UDPServer:
         buffer_size = self.server.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
         print("Buffer size [After]:%d" % buffer_size)
 
-        self.accumulated_gradient = torch.zeros(MSG_SIZE)
+        torch.manual_seed(42)
+        self._indices_queue = []
+        self.accumulated_gradient = torch.zeros([MSG_SIZE, 2])
 
     def encode(self, tensor):
         file = io.BytesIO()
@@ -134,8 +135,14 @@ class UDPServer:
                 if len(self.DEVICES) < self.NUM_CLIENTS:
                     continue
 
+                if not self._indices_queue:
+                    self._indices_queue = torch.randperm(len(flat_grad.buffer)).split(self._K)
+                    self._indices_queue = list(self._indices_queue)
+
+                RandK_indices = self._indices_queue.pop().long()
+
                 for client in self.DEVICES:
-                    accumulated_grad_indices = torch.vstack([torch.arange(self.accumulated_gradient.shape[0]), self.accumulated_gradient]).T
+                    accumulated_grad_indices = torch.vstack([RandK_indices, self.accumulated_gradient]).T
                     self.send(accumulated_grad_indices, client)
 
                 self.DEVICES = []
