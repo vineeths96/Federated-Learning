@@ -136,8 +136,9 @@ class UDPServer:
 
                 for client in self.DEVICES:
                     accumulated_grad_indices = torch.vstack([torch.arange(self.accumulated_gradient.shape[0]), self.accumulated_gradient]).T
-                    print(accumulated_grad_indices)
                     self.send(accumulated_grad_indices, client)
+
+                self.DEVICES = []
 
         except KeyboardInterrupt:
             self.stop()
