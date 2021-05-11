@@ -6,13 +6,13 @@ SERVER_COMP="10.216.18.179"
 NUM_CLIENTS = 2
 
 MSG_SIZE=25e5
-CHUNK=5000
+CHUNK=2000
 DELAY=0
 
 BUFFER = 1024 * 64
 
-use_TCP = True
-# use_TCP = False
+# use_TCP = True
+use_TCP = False
 # UDP_DEBUG = True
 UDP_DEBUG = False
 

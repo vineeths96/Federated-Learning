@@ -12,10 +12,12 @@ BUFFER = 1024 * 16 * 4
 
 class UDPServer:
     def __init__(
-        self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, CHUNK=100, DELAY=5e-4
+        self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, NUM_CLIENTS=1, MSG_SIZE=100000, CHUNK=100, DELAY=5e-4
     ):
         self.SERVER = SERVER
         self.PORT = PORT
+
+        self.NUM_CLIENTS = NUM_CLIENTS
         self.MSG_SIZE = MSG_SIZE
         self.CHUNK = CHUNK
         self.DELAY = DELAY

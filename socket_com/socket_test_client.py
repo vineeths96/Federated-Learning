@@ -36,9 +36,9 @@ else:
             start = time.time()
             client.send(message.clone())
             if UDP_DEBUG:
-                client.receive_TCP_EOT()
+                print(client.receive_TCP_EOT())
             else:
-                client.receive()
+                print(client.receive())
             time_elapsed = time.time() - start
             time_sum += time_elapsed
 
