@@ -25,6 +25,8 @@ class UDPServer:
         self.ADDR = (SERVER, PORT)
         self.END_OF_MESSAGE = torch.tensor(float("inf"))
 
+        self.DEVICES = []
+
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # self.SEND_BUF_SIZE = 4096
@@ -42,6 +44,8 @@ class UDPServer:
         self.server.bind(self.ADDR)
         buffer_size = self.server.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
         print("Buffer size [After]:%d" % buffer_size)
+
+        self.accumulated_gradient = torch.zeros(MSG_SIZE)
 
     def encode(self, tensor):
         file = io.BytesIO()
@@ -84,6 +88,9 @@ class UDPServer:
         while readnext:
             msg, addr = self.server.recvfrom(BUFFER)
 
+            if addr not in self.DEVICES:
+                self.DEVICES.append(addr)
+
             try:
                 decoded_msg = self.decode(msg)
             except:
@@ -96,6 +103,7 @@ class UDPServer:
 
         # TODO Handle buffer [] case
         if len(buffer) > 1:
+            # print(buffer)
             msg = torch.cat(buffer)
         else:
             try:
@@ -107,8 +115,12 @@ class UDPServer:
         print(f"Length of message received: {msg.shape[0]}")
 
         if not UDP_DEBUG:
-            time.sleep(self.DELAY)
-            self.send(msg, addr)
+            indices = msg[:, 0].long()
+            gradient = msg[:, 1]
+            self.accumulated_gradient[indices] += gradient
+
+            # time.sleep(self.DELAY)
+            # self.send(msg, addr)
         else:
             self.send_TCP_EOT()
 
@@ -118,6 +130,15 @@ class UDPServer:
         try:
             while True:
                 self.receive()
+
+                if len(self.DEVICES) < self.NUM_CLIENTS:
+                    continue
+
+                for client in self.DEVICES:
+                    accumulated_grad_indices = torch.vstack([torch.arange(self.accumulated_gradient.shape[0]), self.accumulated_gradient]).T
+                    print(accumulated_grad_indices)
+                    self.send(accumulated_grad_indices, client)
+
         except KeyboardInterrupt:
             self.stop()
 
