@@ -140,7 +140,6 @@ class TCPServer:
 
                     if threading.activeCount() == 1 and client_count == self.NUM_CLIENTS:
                         for client in clients:
-                            print(clients)
                             self.send(self.accumulated_gradient, client)
                             client.shutdown(1)
                             client.close()
