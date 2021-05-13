@@ -3,11 +3,11 @@ from socket_com.UDPSocket import UDPServer
 
 
 config = dict(
-    num_clients=1,
+    num_clients=2,
     num_epochs=1,
     batch_size=128,
-    # communication = "TCP",
-    communication="UDP",
+    communication = "TCP",
+    # communication="UDP",
     server_address="10.32.50.26",
     timeout=20,
     # architecture="ResNet50",
@@ -16,14 +16,14 @@ config = dict(
     local_steps=1,
     chunk=1000,
     delay=100e-6,
-    K=10000,
+    # K=10000,
     # compression=1/1000,
     # quantization_level=6,
     # higher_quantization_level=10,
     # quantization_levels=[6, 10, 16],
     # rank=1,
-    # reducer="NoneAllReducer",
-    reducer="GlobalRandKReducer",
+    reducer="NoneAllReducer",
+    # reducer="GlobalRandKReducer",
     seed=42,
     log_verbosity=2,
     lr=0.1,
@@ -34,6 +34,7 @@ if config["reducer"] == "NoneAllReducer":
     if config["communication"] == "TCP":
         server = TCPServer(
             SERVER=config["server_address"],
+            NUM_CLIENTS=config["num_clients"],
             GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
             MSG_SIZE=config["gradient_size"][config["architecture"]],
             DELAY=config["delay"],

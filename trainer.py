@@ -46,11 +46,11 @@ from socket_com.TCPSocket import TCPClient
 
 
 config = dict(
-    num_clients=1,
+    num_clients=2,
     num_epochs=1,
     batch_size=128,
-    # communication = "TCP",
-    communication="UDP",
+    communication = "TCP",
+    # communication="UDP",
     server_address="10.32.50.26",
     timeout=20,
     # architecture="ResNet50",
@@ -59,14 +59,14 @@ config = dict(
     local_steps=1,
     chunk=1000,
     delay=100e-6,
-    K=10000,
+    # K=10000,
     # compression=1/1000,
     # quantization_level=6,
     # higher_quantization_level=10,
     # quantization_levels=[6, 10, 16],
     # rank=1,
-    # reducer="NoneAllReducer",
-    reducer="GlobalRandKReducer",
+    reducer="NoneAllReducer",
+    # reducer="GlobalRandKReducer",
     seed=42,
     log_verbosity=2,
     lr=0.1,
@@ -77,12 +77,13 @@ def initiate_distributed():
     print(f"[{os.getpid()}] Initializing Distributed Group with: {config['server_address']}")
 
     print(
-        f"[{os.getpid()}] Initialized Distributed Group with: SERVER = {config['server_address']}"
+        f"[{os.getpid()}] Initialized Distributed Group with:  RANK = {dist.get_rank()},"
+        f"SERVER = {config['server_address']}"
         + f", backend={config['communication']}"
     )
 
 
-def train(local_rank=0):
+def train(local_rank):
     logger = Logger(config, local_rank)
 
     # torch.manual_seed(config["seed"] + local_rank)
@@ -164,7 +165,7 @@ def train(local_rank=0):
     best_accuracy = {"top1": 0, "top5": 0}
 
     global_iteration_count = 0
-    model = CIFAR(device, timer, config["architecture"], config["seed"] + local_rank)
+    model = CIFAR(device, timer, config["architecture"], local_rank, config["seed"] + local_rank)
 
     send_buffers = [torch.zeros_like(param) for param in model.parameters]
 
@@ -243,5 +244,10 @@ def train(local_rank=0):
 
 
 if __name__ == "__main__":
-    initiate_distributed()
-    train()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--local_rank", type=int, default=0)
+    args = parser.parse_args()
+    local_rank = args.local_rank
+
+    initiate_distributed(local_rank)
+    train(local_rank)
