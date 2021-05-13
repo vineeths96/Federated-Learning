@@ -192,7 +192,10 @@ class GlobalRandKReducer(Reducer):
             RandK_indices_grad = torch.vstack([RandK_indices, RandK_flat_grad.cpu()]).T
 
             client.send(RandK_indices_grad.clone())
+            print("Local Grad", RandK_indices_grad)
+
             aggregated_RandK_indices_grad = client.receive().to(self._device)
+            print("Aggregated Grad", aggregated_RandK_indices_grad)
 
             aggregated_RandK_indices = aggregated_RandK_indices_grad[:, 0]
             aggregated_RandK_grad = aggregated_RandK_indices_grad[:, 1]
