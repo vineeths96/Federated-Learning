@@ -14,12 +14,19 @@ BUFFER = 1024 * 64
 
 class TCPServer:
     def __init__(
-        self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, NUM_CLIENTS=1, MSG_SIZE=100000, DELAY=5e-1
+        self,
+        SERVER=socket.gethostbyname(socket.gethostname()),
+        PORT=5050,
+        NUM_CLIENTS=1,
+        GRADIENT_SIZE=14728266,
+        MSG_SIZE=100000,
+        DELAY=5e-1,
     ):
         self.SERVER = SERVER
         self.PORT = PORT
 
         self.NUM_CLIENTS = NUM_CLIENTS
+        self.GRADIENT_SIZE = GRADIENT_SIZE
         self.MSG_SIZE = MSG_SIZE
         self.DELAY = DELAY
 
@@ -45,7 +52,7 @@ class TCPServer:
         buffer_size = self.server.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
         print("Buffer size [After]:%d" % buffer_size)
 
-        self.accumulated_gradient = torch.zeros(MSG_SIZE)
+        self.accumulated_gradient = torch.zeros(self.GRADIENT_SIZE)
 
     def encode(self, tensor):
         file = io.BytesIO()
@@ -111,9 +118,8 @@ class TCPServer:
         print(f"[{addr}] {msg}")
 
         if not UDP_DEBUG:
-            indices = msg[:, 0].long()
-            gradient = msg[:, 1]
-            self.accumulated_gradient[indices] += gradient
+            gradient = msg
+            self.accumulated_gradient += gradient
 
             # self.send(msg, conn)
             # conn.shutdown(1)
@@ -165,9 +171,18 @@ class TCPServer:
 
 
 class TCPClient:
-    def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, MSG_SIZE=100000, DELAY=5e-1):
+    def __init__(
+        self,
+        SERVER=socket.gethostbyname(socket.gethostname()),
+        PORT=5050,
+        GRADIENT_SIZE=14728266,
+        MSG_SIZE=100000,
+        DELAY=5e-1,
+    ):
         self.SERVER = SERVER
         self.PORT = PORT
+
+        self.GRADIENT_SIZE = GRADIENT_SIZE
         self.MSG_SIZE = MSG_SIZE
         self.DELAY = DELAY
 

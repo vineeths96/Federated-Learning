@@ -171,11 +171,22 @@ class UDPServer:
 
 class UDPClient:
     def __init__(
-        self, SERVER=socket.gethostbyname(socket.gethostname()), MSG_SIZE=100000, PORT=5050, CHUNK=100, DELAY=5e-4
+        self,
+        SERVER=socket.gethostbyname(socket.gethostname()),
+        PORT=5050,
+        TIMEOUT=5,
+        GRADIENT_SIZE=14728266,
+        MSG_SIZE=100000,
+        CHUNK=100,
+        DELAY=5e-4,
     ):
         self.SERVER = SERVER
         self.PORT = PORT
+
+        self.TIMEOUT = TIMEOUT
+        self.GRADIENT_SIZE = GRADIENT_SIZE
         self.MSG_SIZE = MSG_SIZE
+
         self.CHUNK = CHUNK
         self.DELAY = DELAY
 
