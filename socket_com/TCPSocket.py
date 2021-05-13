@@ -5,6 +5,7 @@ import socket
 import threading
 import numpy as np
 import matplotlib.pyplot as plt
+
 # from parameters import *
 
 UDP_DEBUG = False
@@ -12,7 +13,9 @@ BUFFER = 1024 * 64
 
 
 class TCPServer:
-    def __init__(self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, NUM_CLIENTS=1, MSG_SIZE=100000, DELAY=5e-1):
+    def __init__(
+        self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, NUM_CLIENTS=1, MSG_SIZE=100000, DELAY=5e-1
+    ):
         self.SERVER = SERVER
         self.PORT = PORT
 
@@ -90,10 +93,10 @@ class TCPServer:
 
             while True:
                 if length is None:
-                    if b':' not in buffer:
+                    if b":" not in buffer:
                         break
 
-                    length_str, ignored, buffer = buffer.partition(b':')
+                    length_str, ignored, buffer = buffer.partition(b":")
                     length = int(length_str)
 
                 if len(buffer) < length:
@@ -220,10 +223,10 @@ class TCPClient:
 
             while True:
                 if length is None:
-                    if b':' not in buffer:
+                    if b":" not in buffer:
                         break
 
-                    length_str, ignored, buffer = buffer.partition(b':')
+                    length_str, ignored, buffer = buffer.partition(b":")
                     length = int(length_str)
 
                 if len(buffer) < length:

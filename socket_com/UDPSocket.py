@@ -5,6 +5,7 @@ import socket
 import threading
 import numpy as np
 import matplotlib.pyplot as plt
+
 # from parameters import *
 
 UDP_DEBUG = False
@@ -13,7 +14,15 @@ BUFFER = 1024 * 64
 
 class UDPServer:
     def __init__(
-        self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, NUM_CLIENTS=1, TIMEOUT=5, GRADIENT_SIZE=14728266, MSG_SIZE=100000, CHUNK=100, DELAY=5e-4
+        self,
+        SERVER=socket.gethostbyname(socket.gethostname()),
+        PORT=5050,
+        NUM_CLIENTS=1,
+        TIMEOUT=5,
+        GRADIENT_SIZE=14728266,
+        MSG_SIZE=100000,
+        CHUNK=100,
+        DELAY=5e-4,
     ):
         self.SERVER = SERVER
         self.PORT = PORT

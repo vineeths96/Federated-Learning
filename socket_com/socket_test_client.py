@@ -5,7 +5,7 @@ from UDPSocket import UDPClient
 from parameters import *
 
 torch.manual_seed(42)
-GRADIENT_SIZE=14728266
+GRADIENT_SIZE = 14728266
 
 if use_TCP:
     for msg in MSG_SIZES:
