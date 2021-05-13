@@ -85,18 +85,45 @@ class NoneAllReducer(Reducer):
             flat_grad = TensorBuffer(grad_in)
 
         with self._timer("reduce.allreduce", verbosity=2):
-            if self._config['communication'] == "TCP":
-                client = TCPClient(SERVER=self._config['server_address'],
-                                   MSG_SIZE=self._config['message_size'][self._config['architecture']], DELAY=self._config['delay'])
-            elif self._config['communication'] == "UDP":
-                client = UDPClient(SERVER=self._config['server_address'],
-                                   MSG_SIZE=self._config['message_size'][self._config['architecture']], CHUNK=self._config['chunk'],
-                                   DELAY=self._config['delay'])
+            if self._config["communication"] == "TCP":
+                client = TCPClient(
+                    SERVER=self._config["server_address"],
+                    GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
+                    MSG_SIZE=self._config["gradient_size"][self._config["architecture"]],
+                    DELAY=self._config["delay"],
+                )
+                client_grad = flat_grad.buffer.cpu()
+            elif self._config["communication"] == "UDP":
+                client = UDPClient(
+                    SERVER=self._config["server_address"],
+                    TIMEOUT=self._config["timeout"],
+                    GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
+                    MSG_SIZE=self._config["gradient_size"][self._config["architecture"]],
+                    CHUNK=self._config["chunk"],
+                    DELAY=self._config["delay"],
+                )
+                client_grad = torch.vstack(
+                    [torch.arange(self._config["gradient_size"][self._config["architecture"]]), flat_grad.buffer.cpu()]
+                ).T
             else:
                 raise NotImplementedError("Communication method not implemented.")
 
-            client.send(flat_grad.buffer.clone())
-            aggregated_grad = client.receive()
+            client.send(client_grad.clone())
+
+            if self._config["communication"] == "TCP":
+                aggregated_grad = client.receive().to(self._device)
+            elif self._config["communication"] == "UDP":
+                aggregated_grad_indices = client.receive().to(self._device)
+                aggregated_grad = torch.zeros(
+                    self._config["gradient_size"][self._config["architecture"]], device=self._device
+                )
+
+                indices = aggregated_grad_indices[:, 0].long()
+                gradient = aggregated_grad_indices[:, 1]
+
+                aggregated_grad[indices] = gradient
+            else:
+                raise NotImplementedError("Communication method not implemented.")
 
             # print(aggregated_grad)
             flat_grad.buffer[:] = aggregated_grad
@@ -125,7 +152,7 @@ class GlobalRandKReducer(Reducer):
     def __init__(self, config, device, timer):
         super(GlobalRandKReducer, self).__init__(device, timer)
         self._config = config
-        self._K = config['K']
+        self._K = config["K"]
         self._indices_queue = []
 
     def reduce(self, grad_in, grad_out):
@@ -138,45 +165,58 @@ class GlobalRandKReducer(Reducer):
             self._indices_queue = torch.randperm(len(flat_grad.buffer)).split(self._K)
             self._indices_queue = list(self._indices_queue)
 
-        RandK_indices = self._indices_queue.pop().long().to(self._device)
+        RandK_indices = self._indices_queue.pop().long()
         RandK_flat_grad = flat_grad.buffer[RandK_indices]
 
         with self._timer("reduce.allreduce_K", verbosity=2):
-            if self._config['communication'] == "TCP":
-                client = TCPClient(SERVER=self._config['server_address'],
-                                   MSG_SIZE=self._config['message_size'][self._config['architecture']], DELAY=self._config['delay'])
-            elif self._config['communication'] == "UDP":
-                client = UDPClient(SERVER=self._config['server_address'],
-                                   MSG_SIZE=self._config['message_size'][self._config['architecture']], CHUNK=self._config['chunk'],
-                                   DELAY=self._config['delay'])
+            if self._config["communication"] == "TCP":
+                client = TCPClient(
+                    SERVER=self._config["server_address"],
+                    GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
+                    MSG_SIZE=self._config["K"],
+                    DELAY=self._config["delay"],
+                )
+            elif self._config["communication"] == "UDP":
+                client = UDPClient(
+                    SERVER=self._config["server_address"],
+                    TIMEOUT=self._config["timeout"],
+                    GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
+                    MSG_SIZE=self._config["K"],
+                    CHUNK=self._config["chunk"],
+                    DELAY=self._config["delay"],
+                )
             else:
                 raise NotImplementedError("Communication method not implemented.")
 
-            RandK_indices_grad = torch.vstack([RandK_indices, RandK_flat_grad]).T
+            RandK_indices_grad = torch.vstack([RandK_indices, RandK_flat_grad.cpu()]).T
 
             client.send(RandK_indices_grad.clone())
-            aggregated_RandK_indices_grad = client.receive()
+            aggregated_RandK_indices_grad = client.receive().to(self._device)
 
             aggregated_RandK_indices = aggregated_RandK_indices_grad[:, 0]
             aggregated_RandK_grad = aggregated_RandK_indices_grad[:, 1]
 
-            received_coordinates = torch.tensor(np.intersect1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy()))
-            received_coordinates_fraction = received_coordinates.nelement() / self._config['K']
+            received_coordinates = torch.tensor(
+                np.intersect1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy())
+            )
+            received_coordinates_fraction = received_coordinates.nelement() / self._config["K"]
 
             try:
                 aggregated_RandK_grad = 1 / received_coordinates_fraction * aggregated_RandK_grad
             except:
                 print(aggregated_RandK_indices_grad.shape)
                 print(received_coordinates_fraction)
-                exit(333)
+                exit(3)
 
-            nonreceived_coordinates = torch.tensor(np.setdiff1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy()))
+            nonreceived_coordinates = torch.tensor(
+                np.setdiff1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy())
+            )
 
-            if RandK_indices.nelement() == received_coordinates.unique().nelement() + nonreceived_coordinates.unique().nelement():
-                print(RandK_indices.nelement() == received_coordinates.nelement() + nonreceived_coordinates.nelement())
-            else:
-                print(RandK_indices.nelement(), received_coordinates.unique().nelement(), nonreceived_coordinates.unique().nelement())
-                exit(55)
+            # if RandK_indices.nelement() == received_coordinates.unique().nelement() + nonreceived_coordinates.unique().nelement():
+            #     print(RandK_indices.nelement() == received_coordinates.nelement() + nonreceived_coordinates.nelement())
+            # else:
+            #     print(RandK_indices.nelement(), received_coordinates.unique().nelement(), nonreceived_coordinates.unique().nelement())
+            #     exit(55)
 
         with self._timer("reduce.setgrad", verbosity=2):
             flat_grad.buffer[aggregated_RandK_indices.long()] = aggregated_RandK_grad

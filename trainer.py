@@ -11,7 +11,7 @@ from model_dispatcher import CIFAR
 from reducer import (
     # NoneReducer,
     NoneAllReducer,
-    GlobalRandKReducer
+    GlobalRandKReducer,
     # QSGDReducer,
     # QSGDWECReducer,
     # QSGDWECModReducer,
@@ -46,24 +46,26 @@ from socket_com.TCPSocket import TCPClient
 
 
 config = dict(
+    num_clients=1,
     num_epochs=1,
     batch_size=128,
     # communication = "TCP",
     communication="UDP",
-    server_address = "10.32.50.26",
-    # communication="UDP",
+    server_address="10.32.50.26",
+    timeout=20,
     # architecture="ResNet50",
     architecture="VGG16",
-    message_size = {"ResNet50": 23520842, "VGG16": 14728266},
+    gradient_size={"ResNet50": 23520842, "VGG16": 14728266},
     local_steps=1,
-    chunk=2000,
-    delay=0e-6,
+    chunk=1000,
+    delay=100e-6,
     K=10000,
     # compression=1/1000,
     # quantization_level=6,
     # higher_quantization_level=10,
     # quantization_levels=[6, 10, 16],
     # rank=1,
+    # reducer="NoneAllReducer",
     reducer="GlobalRandKReducer",
     seed=42,
     log_verbosity=2,
@@ -73,13 +75,6 @@ config = dict(
 
 def initiate_distributed():
     print(f"[{os.getpid()}] Initializing Distributed Group with: {config['server_address']}")
-
-    if config['communication'] == "TCP":
-        client = TCPClient(SERVER=config['server_address'], MSG_SIZE= config['message_size'][config['architecture']], DELAY=config['delay'])
-    elif config['communication'] == "UDP":
-        client = UDPClient(SERVER=config['server_address'], MSG_SIZE= config['message_size'][config['architecture']], CHUNK=config['chunk'], DELAY=config['delay'])
-    else:
-        raise NotImplementedError("Communication method not implemented.")
 
     print(
         f"[{os.getpid()}] Initialized Distributed Group with: SERVER = {config['server_address']}"
@@ -248,5 +243,5 @@ def train(local_rank=0):
 
 
 if __name__ == "__main__":
-    # client = initiate_distributed()
+    initiate_distributed()
     train()

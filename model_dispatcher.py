@@ -87,7 +87,6 @@ class CIFAR:
 
         self._epoch += 1
 
-
     def test_dataloader(self, batch_size=32):
         # test_sampler = DistributedSampler(dataset=self._test_set)
 
