@@ -6,8 +6,9 @@ import threading
 import numpy as np
 import matplotlib.pyplot as plt
 # from parameters import *
-UDP_DEBUG=False
-BUFFER = 1024 * 16 * 4
+
+UDP_DEBUG = False
+BUFFER = 1024 * 64
 
 
 class TCPServer:

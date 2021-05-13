@@ -6,13 +6,14 @@ import threading
 import numpy as np
 import matplotlib.pyplot as plt
 # from parameters import *
-UDP_DEBUG=False
-BUFFER = 1024 * 16 * 4
+
+UDP_DEBUG = False
+BUFFER = 1024 * 64
 
 
 class UDPServer:
     def __init__(
-        self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, NUM_CLIENTS=1, MSG_SIZE=100000, GRADIENT_SIZE=23520842, CHUNK=100, DELAY=5e-4
+        self, SERVER=socket.gethostbyname(socket.gethostname()), PORT=5050, NUM_CLIENTS=1, TIMEOUT=5, GRADIENT_SIZE=14728266, MSG_SIZE=100000, CHUNK=100, DELAY=5e-4
     ):
         self.SERVER = SERVER
         self.PORT = PORT
@@ -42,6 +43,8 @@ class UDPServer:
         #     self.RECV_BUF_SIZE)
 
         self.server.bind(self.ADDR)
+        self.server.settimeout(TIMEOUT)
+
         buffer_size = self.server.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
         print("Buffer size [After]:%d" % buffer_size)
 
@@ -142,12 +145,13 @@ class UDPServer:
 
                 RandK_indices = self._indices_queue.pop().long()
                 RandK_flat_grad = self.accumulated_gradient[RandK_indices]
+                accumulated_grad_indices = torch.vstack([RandK_indices, RandK_flat_grad]).T
 
                 for client in self.DEVICES:
-                    accumulated_grad_indices = torch.vstack([RandK_indices, RandK_flat_grad]).T
                     self.send(accumulated_grad_indices, client)
 
                 self.DEVICES = []
+                self.accumulated_gradient.zero_()
 
         except KeyboardInterrupt:
             self.stop()

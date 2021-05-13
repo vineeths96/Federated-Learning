@@ -5,7 +5,7 @@ from UDPSocket import UDPClient
 from parameters import *
 
 torch.manual_seed(42)
-GRADIENT_SIZE=23520842
+GRADIENT_SIZE=14728266
 
 if use_TCP:
     for msg in MSG_SIZES:
@@ -31,19 +31,13 @@ else:
         for i in range(REPS):
             client = UDPClient(SERVER=SERVER, CHUNK=CHUNK, DELAY=DELAY)
 
-            # message = torch.cat([torch.arange(msg).unsqueeze(1), 1 * torch.arange(msg).unsqueeze(1)], dim=-1).to(
-            #     torch.float32
-            # )
-
-            message = torch.cat([torch.arange(GRADIENT_SIZE).unsqueeze(1), 1 * torch.arange(GRADIENT_SIZE).unsqueeze(1)], dim=-1).to(
-                torch.float32
-            )
+            message = torch.vstack([torch.arange(GRADIENT_SIZE), 1 * torch.arange(GRADIENT_SIZE)]).to(torch.float32).T
 
             indices_queue = torch.randperm(GRADIENT_SIZE).split(msg)
             indices_queue = list(indices_queue)
 
             RandK_indices = indices_queue.pop().long()
-            message = message[RandK_indices]
+            message = message[RandK_indices, :]
 
             start = time.time()
             client.send(message.clone())
