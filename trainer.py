@@ -48,7 +48,7 @@ from socket_com.TCPSocket import TCPClient
 config = dict(
     num_epochs=1,
     batch_size=128,
-    communication = "TCP",
+    communication="TCP",
     # communication="UDP",
     server_address="10.32.50.26",
     timeout=20,
@@ -56,8 +56,8 @@ config = dict(
     architecture="VGG16",
     gradient_size={"ResNet50": 23520842, "VGG16": 14728266},
     local_steps=1,
-    chunk=1000,
-    delay=100e-6,
+    chunk=2000,
+    delay=0,
     # K=10000,
     # compression=1/1000,
     # quantization_level=6,
@@ -73,7 +73,7 @@ config = dict(
 
 
 def initiate_distributed(local_rank, world_size):
-    config['num_clients'] = world_size
+    config["num_clients"] = world_size
 
     print(f"[{os.getpid()}] Initializing Distributed Group with: {config['server_address']}")
 

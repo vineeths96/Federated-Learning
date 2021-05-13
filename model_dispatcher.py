@@ -66,14 +66,16 @@ class CIFAR:
         return model
 
     def train_dataloader(self, batch_size=32):
-        train_sampler = DistributedSampler(dataset=self._train_set, num_replicas=self._world_size, rank=self._local_rank)
+        train_sampler = DistributedSampler(
+            dataset=self._train_set, num_replicas=self._world_size, rank=self._local_rank
+        )
         train_sampler.set_epoch(self._epoch)
 
         train_loader = DataLoader(
             dataset=self._train_set,
             batch_size=batch_size,
-            shuffle=True,
-            # sampler=train_sampler,
+            # shuffle=True,
+            sampler=train_sampler,
             pin_memory=True,
             drop_last=True,
             num_workers=0,
@@ -95,8 +97,8 @@ class CIFAR:
         test_loader = DataLoader(
             dataset=self._test_set,
             batch_size=batch_size,
-            shuffle=True,
-            # sampler=test_sampler,
+            # shuffle=True,
+            sampler=test_sampler,
             pin_memory=True,
             drop_last=True,
             num_workers=0,

@@ -1,12 +1,12 @@
+import argparse
 from socket_com.TCPSocket import TCPServer
 from socket_com.UDPSocket import UDPServer
 
 
 config = dict(
-    num_clients=2,
     num_epochs=1,
     batch_size=128,
-    communication = "TCP",
+    communication="TCP",
     # communication="UDP",
     server_address="10.32.50.26",
     timeout=20,
@@ -14,8 +14,8 @@ config = dict(
     architecture="VGG16",
     gradient_size={"ResNet50": 23520842, "VGG16": 14728266},
     local_steps=1,
-    chunk=1000,
-    delay=100e-6,
+    chunk=2000,
+    delay=0,
     # K=10000,
     # compression=1/1000,
     # quantization_level=6,
@@ -30,47 +30,58 @@ config = dict(
 )
 
 
-if config["reducer"] == "NoneAllReducer":
-    if config["communication"] == "TCP":
-        server = TCPServer(
-            SERVER=config["server_address"],
-            NUM_CLIENTS=config["num_clients"],
-            GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
-            MSG_SIZE=config["gradient_size"][config["architecture"]],
-            DELAY=config["delay"],
-        )
-    elif config["communication"] == "UDP":
-        server = UDPServer(
-            SERVER=config["server_address"],
-            NUM_CLIENTS=config["num_clients"],
-            TIMEOUT=config["timeout"],
-            GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
-            MSG_SIZE=config["gradient_size"][config["architecture"]],
-            CHUNK=config["chunk"],
-            DELAY=config["delay"],
-        )
-    else:
-        raise NotImplementedError("Communication method not implemented.")
-elif config["reducer"] == "GlobalRandKReducer":
-    if config["communication"] == "TCP":
-        server = TCPServer(
-            SERVER=config["server_address"],
-            GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
-            MSG_SIZE=config["K"],
-            DELAY=config["delay"],
-        )
-    elif config["communication"] == "UDP":
-        server = UDPServer(
-            SERVER=config["server_address"],
-            NUM_CLIENTS=config["num_clients"],
-            TIMEOUT=config["timeout"],
-            GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
-            MSG_SIZE=config["K"],
-            CHUNK=config["chunk"],
-            DELAY=config["delay"],
-        )
-    else:
-        raise NotImplementedError("Communication method not implemented.")
+def start_server(world_size):
+    config["num_clients"] = world_size
+
+    if config["reducer"] == "NoneAllReducer":
+        if config["communication"] == "TCP":
+            server = TCPServer(
+                SERVER=config["server_address"],
+                NUM_CLIENTS=config["num_clients"],
+                GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
+                MSG_SIZE=config["gradient_size"][config["architecture"]],
+                DELAY=config["delay"],
+            )
+        elif config["communication"] == "UDP":
+            server = UDPServer(
+                SERVER=config["server_address"],
+                NUM_CLIENTS=config["num_clients"],
+                TIMEOUT=config["timeout"],
+                GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
+                MSG_SIZE=config["gradient_size"][config["architecture"]],
+                CHUNK=config["chunk"],
+                DELAY=config["delay"],
+            )
+        else:
+            raise NotImplementedError("Communication method not implemented.")
+    elif config["reducer"] == "GlobalRandKReducer":
+        if config["communication"] == "TCP":
+            server = TCPServer(
+                SERVER=config["server_address"],
+                GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
+                MSG_SIZE=config["K"],
+                DELAY=config["delay"],
+            )
+        elif config["communication"] == "UDP":
+            server = UDPServer(
+                SERVER=config["server_address"],
+                NUM_CLIENTS=config["num_clients"],
+                TIMEOUT=config["timeout"],
+                GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
+                MSG_SIZE=config["K"],
+                CHUNK=config["chunk"],
+                DELAY=config["delay"],
+            )
+        else:
+            raise NotImplementedError("Communication method not implemented.")
+
+    server.start()
 
 
-server.start()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--world_size", type=int, default=2)
+    args = parser.parse_args()
+    world_size = args.world_size
+
+    start_server(world_size)

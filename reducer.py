@@ -109,7 +109,7 @@ class NoneAllReducer(Reducer):
                 raise NotImplementedError("Communication method not implemented.")
 
             client.send(client_grad.clone())
-            print("Local", client_grad)
+            print("Local Grad", client_grad)
 
             if self._config["communication"] == "TCP":
                 aggregated_grad = client.receive().to(self._device)
@@ -126,7 +126,7 @@ class NoneAllReducer(Reducer):
             else:
                 raise NotImplementedError("Communication method not implemented.")
 
-            print(aggregated_grad)
+            print("Aggregated Grad", aggregated_grad)
             flat_grad.buffer[:] = aggregated_grad
 
             for out in grad_out:
