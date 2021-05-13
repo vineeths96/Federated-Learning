@@ -73,11 +73,11 @@ config = dict(
 )
 
 
-def initiate_distributed():
+def initiate_distributed(local_rank):
     print(f"[{os.getpid()}] Initializing Distributed Group with: {config['server_address']}")
 
     print(
-        f"[{os.getpid()}] Initialized Distributed Group with:  RANK = {dist.get_rank()},"
+        f"[{os.getpid()}] Initialized Distributed Group with:  RANK = {local_rank},"
         f"SERVER = {config['server_address']}"
         + f", backend={config['communication']}"
     )
