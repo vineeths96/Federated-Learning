@@ -93,7 +93,8 @@ def train(local_rank, world_size):
     torch.manual_seed(config["seed"])
     np.random.seed(config["seed"])
 
-    device = torch.device(f"cuda:{local_rank}")
+    # device = torch.device(f"cuda:{local_rank}")
+    device = torch.device(f"cuda:{0}")
     timer = Timer(verbosity_level=config["log_verbosity"])
 
     if config["reducer"] in [
