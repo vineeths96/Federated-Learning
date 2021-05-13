@@ -13,11 +13,12 @@ class CIFAR:
     Instantiates a deep model of the specified architecture on the specified device.
     """
 
-    def __init__(self, device, timer, architecture, local_rank, seed):
+    def __init__(self, device, timer, architecture, local_rank, world_size, seed):
         self._device = device
         self._timer = timer
         self._architecture = architecture
-        self._local_rank =local_rank
+        self._local_rank = local_rank
+        self._world_size = world_size
         self._seed = seed
 
         self._epoch = 0
@@ -65,7 +66,7 @@ class CIFAR:
         return model
 
     def train_dataloader(self, batch_size=32):
-        train_sampler = DistributedSampler(dataset=self._train_set, rank=self._local_rank)
+        train_sampler = DistributedSampler(dataset=self._train_set, num_replicas=self._world_size, rank=self._local_rank)
         train_sampler.set_epoch(self._epoch)
 
         train_loader = DataLoader(
@@ -89,7 +90,7 @@ class CIFAR:
         self._epoch += 1
 
     def test_dataloader(self, batch_size=32):
-        test_sampler = DistributedSampler(dataset=self._test_set)
+        test_sampler = DistributedSampler(dataset=self._test_set, num_replicas=self._world_size, rank=self._local_rank)
 
         test_loader = DataLoader(
             dataset=self._test_set,

@@ -46,7 +46,6 @@ from socket_com.TCPSocket import TCPClient
 
 
 config = dict(
-    num_clients=2,
     num_epochs=1,
     batch_size=128,
     communication = "TCP",
@@ -73,17 +72,20 @@ config = dict(
 )
 
 
-def initiate_distributed(local_rank):
+def initiate_distributed(local_rank, world_size):
+    config['num_clients'] = world_size
+
     print(f"[{os.getpid()}] Initializing Distributed Group with: {config['server_address']}")
 
     print(
-        f"[{os.getpid()}] Initialized Distributed Group with:  RANK = {local_rank},"
-        f"SERVER = {config['server_address']}"
-        + f", backend={config['communication']}"
+        f"[{os.getpid()}] Initialized Distributed Group with:  RANK = {local_rank}, "
+        + f"WORLD_SIZE = {world_size}, "
+        + f"SERVER = {config['server_address']}, "
+        + f"backend={config['communication']}"
     )
 
 
-def train(local_rank):
+def train(local_rank, world_size):
     logger = Logger(config, local_rank)
 
     # torch.manual_seed(config["seed"] + local_rank)
@@ -165,7 +167,7 @@ def train(local_rank):
     best_accuracy = {"top1": 0, "top5": 0}
 
     global_iteration_count = 0
-    model = CIFAR(device, timer, config["architecture"], local_rank, config["seed"] + local_rank)
+    model = CIFAR(device, timer, config["architecture"], local_rank, world_size, config["seed"] + local_rank)
 
     send_buffers = [torch.zeros_like(param) for param in model.parameters]
 
@@ -246,8 +248,10 @@ def train(local_rank):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--local_rank", type=int, default=0)
+    parser.add_argument("--world_size", type=int, default=2)
     args = parser.parse_args()
     local_rank = args.local_rank
+    world_size = args.world_size
 
-    initiate_distributed(local_rank)
-    train(local_rank)
+    initiate_distributed(local_rank, world_size)
+    train(local_rank, world_size)
