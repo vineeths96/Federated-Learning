@@ -1,6 +1,7 @@
 import torch
-import torch.distributed
+import random
 import numpy as np
+import torch.distributed
 
 
 from compressors import (
@@ -25,8 +26,9 @@ from compressors import (
     # GlobalRandKMultiScaleCompressor,
 )
 
-from socket_com.TCPSocket import TCPClient
-from socket_com.UDPSocket import UDPClient
+from seed import set_seed
+from socket_com.TCPSocket import TCPClient, TCPKClient
+from socket_com.UDPSocket import UDPClient, UDPKClient
 
 
 class Reducer:
@@ -89,8 +91,8 @@ class NoneAllReducer(Reducer):
                 client = TCPClient(
                     SERVER=self._config["server_address"],
                     GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
-                    MSG_SIZE=self._config["gradient_size"][self._config["architecture"]],
                     DELAY=self._config["delay"],
+                    SEED=self._config["seed"],
                 )
                 client_grad = flat_grad.buffer.cpu()
             elif self._config["communication"] == "UDP":
@@ -98,10 +100,11 @@ class NoneAllReducer(Reducer):
                     SERVER=self._config["server_address"],
                     TIMEOUT=self._config["timeout"],
                     GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
-                    MSG_SIZE=self._config["gradient_size"][self._config["architecture"]],
                     CHUNK=self._config["chunk"],
                     DELAY=self._config["delay"],
+                    SEED=self._config["seed"],
                 )
+
                 client_grad = torch.vstack(
                     [torch.arange(self._config["gradient_size"][self._config["architecture"]]), flat_grad.buffer.cpu()]
                 ).T
@@ -163,6 +166,7 @@ class GlobalRandKReducer(Reducer):
             flat_grad = TensorBuffer(grad_in)
 
         if not self._indices_queue:
+            set_seed(self._config["seed"])
             self._indices_queue = torch.randperm(len(flat_grad.buffer)).split(self._K)
             self._indices_queue = list(self._indices_queue)
 
@@ -171,25 +175,28 @@ class GlobalRandKReducer(Reducer):
 
         with self._timer("reduce.allreduce_K", verbosity=2):
             if self._config["communication"] == "TCP":
-                client = TCPClient(
+                client = TCPKClient(
                     SERVER=self._config["server_address"],
                     GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
-                    MSG_SIZE=self._config["K"],
+                    K=self._config["K"],
                     DELAY=self._config["delay"],
+                    SEED=self._config["seed"],
                 )
             elif self._config["communication"] == "UDP":
-                client = UDPClient(
+                client = UDPKClient(
                     SERVER=self._config["server_address"],
                     TIMEOUT=self._config["timeout"],
                     GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
-                    MSG_SIZE=self._config["K"],
+                    K=self._config["K"],
                     CHUNK=self._config["chunk"],
                     DELAY=self._config["delay"],
+                    SEED=self._config["seed"],
                 )
             else:
                 raise NotImplementedError("Communication method not implemented.")
 
             RandK_indices_grad = torch.vstack([RandK_indices, RandK_flat_grad.cpu()]).T
+            print(RandK_indices)
 
             client.send(RandK_indices_grad.clone())
             print("Local Grad", RandK_indices_grad)
