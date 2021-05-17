@@ -1,55 +1,25 @@
 import os
-import datetime
 import argparse
-import numpy as np
 
 import torch
 import torch.optim as optim
-import torch.distributed as dist
 
 from model_dispatcher import CIFAR
 from reducer import (
-    # NoneReducer,
     NoneAllReducer,
     GlobalRandKReducer,
-    # QSGDReducer,
-    # QSGDWECReducer,
-    # QSGDWECModReducer,
-    # TernGradReducer,
-    # TernGradModReducer,
-    # QSGDMaxNormReducer,
-    # # QSGDBPReducer,
-    # # QSGDBPAllReducer,
-    # GlobalRandKMaxNormReducer,
-    # MaxNormGlobalRandKReducer,
-    # NUQSGDModReducer,
-    # NUQSGDMaxNormReducer,
-    # TopKReducer,
-    # TopKReducerRatio,
-    # GlobalTopKReducer,
-    # GlobalTopKReducerRatio,
-    # QSGDMaxNormBiasedReducer,
-    # QSGDMaxNormBiasedMemoryReducer,
-    # NUQSGDMaxNormBiasedReducer,
-    # NUQSGDMaxNormBiasedMemoryReducer,
-    # QSGDMaxNormTwoScaleReducer,
-    # GlobalRandKMaxNormTwoScaleReducer,
-    # QSGDMaxNormMultiScaleReducer,
-    # RankKReducer,
 )
 from timer import Timer
 from logger import Logger
 from metrics import AverageMeter
-
-from socket_com.UDPSocket import UDPClient
-from socket_com.TCPSocket import TCPClient
+from seed import set_seed
 
 
 config = dict(
     num_epochs=1,
     batch_size=128,
-    # communication="TCP",
-    communication="UDP",
+    communication="TCP",
+    # communication="UDP",
     server_address="10.32.50.26",
     timeout=20,
     # architecture="ResNet50",
@@ -58,14 +28,14 @@ config = dict(
     local_steps=1,
     chunk=2000,
     delay=0,
-    K=10000,
+    # K=10000,
     # compression=1/1000,
     # quantization_level=6,
     # higher_quantization_level=10,
     # quantization_levels=[6, 10, 16],
     # rank=1,
-    # reducer="NoneAllReducer",
-    reducer="GlobalRandKReducer",
+    reducer="NoneAllReducer",
+    # reducer="GlobalRandKReducer",
     seed=42,
     log_verbosity=2,
     lr=0.1,
@@ -86,12 +56,8 @@ def initiate_distributed(local_rank, world_size):
 
 
 def train(local_rank, world_size):
+    set_seed(config["seed"])
     logger = Logger(config, local_rank)
-
-    # torch.manual_seed(config["seed"] + local_rank)
-    # np.random.seed(config["seed"] + local_rank)
-    torch.manual_seed(config["seed"])
-    np.random.seed(config["seed"])
 
     # device = torch.device(f"cuda:{local_rank}")
     device = torch.device(f"cuda:{0}")
