@@ -114,10 +114,7 @@ class UDPServer:
         if len(buffer) > 1:
             msg = torch.cat(buffer)
         else:
-            try:
-                msg = buffer[0]
-            except:
-                print(buffer, len(buffer))
+            msg = buffer[0]
 
         print(f"[{addr}] {msg}")
         print(f"Length of message received: {msg.shape[0]}")
@@ -143,7 +140,6 @@ class UDPServer:
 
                 self.DEVICES = []
                 self.accumulated_gradient.zero_()
-                print("\n\n\n")
 
         except KeyboardInterrupt:
             self.stop()
@@ -348,10 +344,7 @@ class UDPKServer:
         if len(buffer) > 1:
             msg = torch.cat(buffer)
         else:
-            try:
-                msg = buffer[0]
-            except:
-                print(buffer, len(buffer))
+            msg = buffer[0]
 
         print(f"[{addr}] {msg}")
         print(f"Length of message received: {msg.shape[0]}")

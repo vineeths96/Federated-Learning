@@ -381,7 +381,6 @@ class TCPKServer:
                         self._indices_queue = list(self._indices_queue)
 
                     RandK_indices = self._indices_queue.pop().long()
-                    print(RandK_indices)
                     RandK_flat_grad = self.accumulated_gradient[RandK_indices]
                     accumulated_grad_indices = torch.vstack([RandK_indices, RandK_flat_grad]).T
 
