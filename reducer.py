@@ -223,6 +223,14 @@ class GlobalRandKReducer(Reducer):
                 np.setdiff1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy())
             )
 
+            delay_received_coordinates = torch.tensor(
+                np.setdiff1d(aggregated_RandK_indices.unique().cpu().numpy(), RandK_indices.unique().cpu().numpy())
+            )
+
+            if delay_received_coordinates.nelement() > 0:
+                print("Delay", delay_received_coordinates.nelement())
+                exit(7)
+
             # if (
             #     RandK_indices.nelement()
             #     == received_coordinates.unique().nelement() + nonreceived_coordinates.unique().nelement()
