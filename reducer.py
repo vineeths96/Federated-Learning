@@ -112,7 +112,7 @@ class NoneAllReducer(Reducer):
                 raise NotImplementedError("Communication method not implemented.")
 
             client.send(client_grad.clone())
-            print("Local Grad", client_grad)
+            # print("Local Grad", client_grad)
 
             if self._config["communication"] == "TCP":
                 aggregated_grad = client.receive().to(self._device)
@@ -129,7 +129,7 @@ class NoneAllReducer(Reducer):
             else:
                 raise NotImplementedError("Communication method not implemented.")
 
-            print("Aggregated Grad", aggregated_grad)
+            # print("Aggregated Grad", aggregated_grad)
             flat_grad.buffer[:] = aggregated_grad
 
             for out in grad_out:
@@ -223,11 +223,18 @@ class GlobalRandKReducer(Reducer):
                 np.setdiff1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy())
             )
 
-            # if RandK_indices.nelement() == received_coordinates.unique().nelement() + nonreceived_coordinates.unique().nelement():
+            # if (
+            #     RandK_indices.nelement()
+            #     == received_coordinates.unique().nelement() + nonreceived_coordinates.unique().nelement()
+            # ):
             #     print(RandK_indices.nelement() == received_coordinates.nelement() + nonreceived_coordinates.nelement())
             # else:
-            #     print(RandK_indices.nelement(), received_coordinates.unique().nelement(), nonreceived_coordinates.unique().nelement())
-            #     exit(55)
+            #     print(
+            #         RandK_indices.nelement(),
+            #         received_coordinates.unique().nelement(),
+            #         nonreceived_coordinates.unique().nelement(),
+            #     )
+            #     raise ValueError
 
         with self._timer("reduce.setgrad", verbosity=2):
             flat_grad.buffer[aggregated_RandK_indices.long()] = aggregated_RandK_grad

@@ -136,11 +136,14 @@ class UDPServer:
                 if len(self.DEVICES) < self.NUM_CLIENTS:
                     continue
 
+                accumulated_grad_indices = torch.vstack([torch.arange(self.GRADIENT_SIZE), self.accumulated_gradient]).T
+
                 for client in self.DEVICES:
-                    self.send(self.accumulated_gradient, client)
+                    self.send(accumulated_grad_indices[:10000, :], client)
 
                 self.DEVICES = []
                 self.accumulated_gradient.zero_()
+                print("\n\n\n")
 
         except KeyboardInterrupt:
             self.stop()
