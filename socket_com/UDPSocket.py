@@ -327,8 +327,8 @@ class UDPKServer:
         while readnext:
             msg, addr = self.server.recvfrom(BUFFER)
 
-            if addr not in self.DEVICES:
-                self.DEVICES.append(addr)
+            # if addr not in self.DEVICES:
+            #     self.DEVICES.append(addr)
 
             try:
                 decoded_msg = self.decode(msg)
@@ -336,6 +336,9 @@ class UDPKServer:
                 continue
 
             if not len(decoded_msg.shape) and torch.isinf(decoded_msg):
+                if addr not in self.DEVICES:
+                    self.DEVICES.append(addr)
+
                 break
 
             buffer.append(decoded_msg)
