@@ -384,6 +384,8 @@ class TCPKServer:
                     RandK_flat_grad = self.accumulated_gradient[RandK_indices]
                     accumulated_grad_indices = torch.vstack([RandK_indices, RandK_flat_grad]).T
 
+                    print(RandK_indices)
+
                     for client in clients:
                         self.send(accumulated_grad_indices, client)
                         client.shutdown(1)
