@@ -13,7 +13,8 @@ class TCPUDPKServer:
     def __init__(
         self,
         SERVER=socket.gethostbyname(socket.gethostname()),
-        PORT=5050,
+        TCP_PORT=5050,
+        UDP_PORT=5060,
         TIMEOUT=5,
         NUM_CLIENTS=1,
         GRADIENT_SIZE=14728266,
@@ -23,7 +24,8 @@ class TCPUDPKServer:
         SEED=42,
     ):
         self.SERVER = SERVER
-        self.PORT = PORT
+        self.TCP_PORT = TCP_PORT
+        self.UDP_PORT = UDP_PORT
 
         self.TIMEOUT = TIMEOUT
         self.NUM_CLIENTS = NUM_CLIENTS
@@ -33,8 +35,8 @@ class TCPUDPKServer:
         self.DELAY = DELAY
         self.SEED = SEED
 
-        self.ADDR = (SERVER, PORT)
-        self.ADDR1 = (SERVER, PORT+10)
+        self.TCP_ADDR = (SERVER, TCP_PORT)
+        self.UDP_ADDR = (SERVER, UDP_PORT)
 
         self.START_OF_MESSAGE = torch.tensor(-float("inf"))
         self.END_OF_MESSAGE = torch.tensor(float("inf"))
@@ -43,13 +45,13 @@ class TCPUDPKServer:
 
         self.serverTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverTCP.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.serverTCP.bind(self.ADDR)
+        self.serverTCP.bind(self.TCP_ADDR)
         buffer_size = self.serverTCP.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
         print("TCP Buffer size [After]:%d" % buffer_size)
 
         self.serverUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.serverUDP.bind(self.ADDR1)
-        self.serverUDP.settimeout(TIMEOUT)
+        self.serverUDP.bind(self.UDP_ADDR)
+        self.serverUDP.settimeout(self.TIMEOUT)
         buffer_size = self.serverUDP.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
         print("Buffer size [After]:%d" % buffer_size)
 
@@ -102,22 +104,17 @@ class TCPUDPKServer:
                 msg = conn.recv(BUFFER)
                 flag = self.decode(msg)
                 conn.setblocking(False)
-            except:
+            except socket.error:
                 pass
 
-            print(flag)
             if torch.isinf(flag) and torch.sign(flag) > 0:
                 readnext = False
 
             if torch.isinf(flag) and torch.sign(flag) < 0:
                 while True:
-                    msg, addr = None, None
                     try:
                         msg, addr = self.serverUDP.recvfrom(BUFFER)
-                    except:
-                        pass
-
-                    if not msg:
+                    except socket.error:
                         break
 
                     if addr not in self.DEVICES:
@@ -138,26 +135,10 @@ class TCPUDPKServer:
 
         print(f"[{addr}] {msg}")
         print(f"Length of message received: {msg.shape[0]}")
-        print(f"Length of message received: {msg[:,0].unique().shape[0]}")
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
         self.accumulated_gradient[indices] += gradient
-
-
-
-
-
-
-
-
-
-
-        # msg = self.decode(buffer)
-        # print(f"[{addr}] {msg}")
-        #
-        # gradient = msg
-        # self.accumulated_gradient += gradient
 
         return
 
@@ -180,27 +161,47 @@ class TCPUDPKServer:
                 # print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
                 if threading.activeCount() == 1 and client_count == self.NUM_CLIENTS:
-                    for client in clients:
-                        self.sendTCP(self.accumulated_gradient, client)
+                    if not self._indices_queue:
+                        set_seed(self.SEED)
+                        self._indices_queue = torch.randperm(self.GRADIENT_SIZE).split(self.K)
+                        self._indices_queue = list(self._indices_queue)
+
+                    RandK_indices = self._indices_queue.pop().long()
+                    RandK_flat_grad = self.accumulated_gradient[RandK_indices]
+                    accumulated_grad_indices = torch.vstack([RandK_indices, RandK_flat_grad]).T
+
+                    print(RandK_indices)
+                    self.DEVICES.sort(key=lambda device: device[0])
+                    clients.sort(key=lambda client: client.getsockname)
+                    # print(self.DEVICES)
+                    # print(clients)
+
+                    for client, device in zip(clients, self.DEVICES):
+                        self.sendTCP_SOT(client)
+                        self.sendUDP(accumulated_grad_indices, device)
+                        self.sendTCP_EOT(client)
                         client.shutdown(1)
                         client.close()
 
                     clients = []
                     client_count = 0
+                    self.DEVICES = []
                     self.accumulated_gradient.zero_()
-        except StopIteration:
+        except KeyboardInterrupt:
             self.stop()
 
     def stop(self):
         self.serverTCP.shutdown(1)
         self.serverTCP.close()
+        self.serverUDP.close()
 
 
 class TCPUDPKClient:
     def __init__(
         self,
         SERVER=socket.gethostbyname(socket.gethostname()),
-        PORT=5050,
+        TCP_PORT=5050,
+        UDP_PORT=5060,
         TIMEOUT=5,
         GRADIENT_SIZE=14728266,
         K=10000,
@@ -209,7 +210,8 @@ class TCPUDPKClient:
         SEED=42,
     ):
         self.SERVER = SERVER
-        self.PORT = PORT
+        self.TCP_PORT = TCP_PORT
+        self.UDP_PORT = UDP_PORT
 
         self.TIMEOUT = TIMEOUT
         self.K = K
@@ -218,16 +220,17 @@ class TCPUDPKClient:
         self.DELAY = DELAY
         self.SEED = SEED
 
-        self.ADDR = (SERVER, PORT)
-        self.ADDR1 = (SERVER, PORT+10)
+        self.TCP_ADDR = (SERVER, TCP_PORT)
+        self.UDP_ADDR = (SERVER, UDP_PORT)
 
         self.START_OF_MESSAGE = torch.tensor(-float("inf"))
         self.END_OF_MESSAGE = torch.tensor(float("inf"))
 
         self.clientTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.clientTCP.connect(self.ADDR)
+        self.clientTCP.connect(self.TCP_ADDR)
 
         self.clientUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.clientUDP.settimeout(self.TIMEOUT)
 
     def encode(self, tensor):
         file = io.BytesIO()
@@ -263,38 +266,45 @@ class TCPUDPKClient:
 
         for message in messages:
             encoded_message = self.encode(message.clone())
-            self.clientUDP.sendto(encoded_message, self.ADDR1)
+            self.clientUDP.sendto(encoded_message, self.UDP_ADDR)
 
             time.sleep(self.DELAY)
 
     def receive(self):
-        length = None
-        buffer = bytearray()
-
+        buffer = []
         readnext = True
         while readnext:
-            msg = self.clientUDP.recv(BUFFER)
-            buffer += msg
+            try:
+                msg = self.clientTCP.recv(BUFFER)
+                flag = self.decode(msg)
+                self.clientTCP.setblocking(False)
+            except socket.error:
+                pass
 
-            if len(buffer) == length:
-                break
+            if torch.isinf(flag) and torch.sign(flag) > 0:
+                readnext = False
 
-            while True:
-                if length is None:
-                    if b":" not in buffer:
+            if torch.isinf(flag) and torch.sign(flag) < 0:
+                while True:
+                    try:
+                        msg, addr = self.clientUDP.recvfrom(BUFFER)
+                    except socket.error:
                         break
 
-                    length_str, ignored, buffer = buffer.partition(b":")
-                    length = int(length_str)
+                    try:
+                        decoded_msg = self.decode(msg)
+                    except:
+                        continue
 
-                if len(buffer) < length:
-                    break
+                    buffer.append(decoded_msg)
 
-                buffer = buffer[length:]
+        # TODO Handle buffer [] case
+        if len(buffer) > 1:
+            msg = torch.cat(buffer)
+        else:
+            msg = buffer[0]
 
-                length = None
-                break
-
-        msg = self.decode(buffer)
+        # print(f"[{addr}] {msg}")
+        # print(f"Length of message received: {msg.shape[0]}")
 
         return msg
