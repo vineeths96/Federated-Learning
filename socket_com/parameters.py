@@ -3,15 +3,17 @@
 SERVER = "10.32.50.26"
 SERVER_COMP = "10.216.18.179"
 
-NUM_CLIENTS = 2
-TIMEOUT = 10
+NUM_CLIENTS = 1
+TIMEOUT = 1
 
 MSG_SIZE = 25e5
-CHUNK = 1000
-DELAY = 0e-6
+CHUNK = 2000
+DELAY = 0e-3
 
 BUFFER = 1024 * 64
 
+use_TCPUDP = True
+# use_TCPUDP = False
 # use_TCP = True
 use_TCP = False
 # UDP_DEBUG = True

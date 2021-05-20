@@ -43,7 +43,6 @@ class TCPUDPKServer:
 
         self.serverTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverTCP.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # self.serverTCP.setblocking(False)
         self.serverTCP.bind(self.ADDR)
         buffer_size = self.serverTCP.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
         print("TCP Buffer size [After]:%d" % buffer_size)
@@ -103,7 +102,6 @@ class TCPUDPKServer:
                 msg = conn.recv(BUFFER)
                 flag = self.decode(msg)
                 conn.setblocking(False)
-                # print(flag)
             except:
                 pass
 
@@ -112,18 +110,25 @@ class TCPUDPKServer:
                 readnext = False
 
             if torch.isinf(flag) and torch.sign(flag) < 0:
-                msg, addr = self.serverUDP.recvfrom(BUFFER)
+                while True:
+                    msg, addr = None, None
+                    try:
+                        msg, addr = self.serverUDP.recvfrom(BUFFER)
+                    except:
+                        pass
 
-                if addr not in self.DEVICES:
-                    self.DEVICES.append(addr)
+                    if not msg:
+                        break
 
-                try:
-                    decoded_msg = self.decode(msg)
-                except:
-                    continue
+                    if addr not in self.DEVICES:
+                        self.DEVICES.append(addr)
 
-                buffer.append(decoded_msg)
-                # print(buffer)
+                    try:
+                        decoded_msg = self.decode(msg)
+                    except:
+                        continue
+
+                    buffer.append(decoded_msg)
 
         # TODO Handle buffer [] case
         if len(buffer) > 1:
@@ -133,6 +138,7 @@ class TCPUDPKServer:
 
         print(f"[{addr}] {msg}")
         print(f"Length of message received: {msg.shape[0]}")
+        print(f"Length of message received: {msg[:,0].unique().shape[0]}")
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
