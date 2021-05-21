@@ -46,14 +46,27 @@ class TCPUDPKServer:
         self.serverTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverTCP.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.serverTCP.bind(self.TCP_ADDR)
-        buffer_size = self.serverTCP.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
-        print("TCP Buffer size [After]:%d" % buffer_size)
+        # buffer_size = self.serverTCP.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
+        # print("TCP Buffer size [After]:%d" % buffer_size)
 
-        self.serverUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.serverUDP.bind(self.UDP_ADDR)
-        self.serverUDP.settimeout(self.TIMEOUT)
-        buffer_size = self.serverUDP.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
-        print("Buffer size [After]:%d" % buffer_size)
+        # self.serverUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # self.serverUDP.bind(self.UDP_ADDR)
+        # self.serverUDP.settimeout(self.TIMEOUT)
+        # buffer_size = self.serverUDP.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
+        # print("Buffer size [After]:%d" % buffer_size)
+
+        self.UDP_PORT_LIST = [UDP_PORT + i for i in range(NUM_CLIENTS)]
+        self.UDP_ADDR_LIST = [(SERVER, UDP_PORT_ELEMENT) for UDP_PORT_ELEMENT in self.UDP_PORT_LIST]
+        self.serverUDP = [None] * NUM_CLIENTS
+
+        for ind in range(NUM_CLIENTS):
+            self.serverUDP[ind] = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.serverUDP[ind].bind(self.UDP_ADDR_LIST[ind])
+            self.serverUDP[ind].settimeout(self.TIMEOUT)
+            # buffer_size = self.serverUDP[ind].getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
+            # print("Buffer size [After]:%d" % buffer_size)
+
+        print(self.serverUDP)
 
         self._indices_queue = []
         self.accumulated_gradient = torch.zeros(self.GRADIENT_SIZE)
@@ -102,19 +115,26 @@ class TCPUDPKServer:
         while readnext:
             try:
                 msg = conn.recv(BUFFER)
-                flag = self.decode(msg)
+                decoded_msg = self.decode(msg)
+                flag = decoded_msg[0]
+                local_rank = int(decoded_msg[1].item())
                 conn.setblocking(False)
-            except socket.error:
+            except socket.error as e:
+                print(e)
                 pass
 
+            print(local_rank, flag)
             if torch.isinf(flag) and torch.sign(flag) > 0:
                 readnext = False
 
             if torch.isinf(flag) and torch.sign(flag) < 0:
                 while True:
                     try:
-                        msg, addr = self.serverUDP.recvfrom(BUFFER)
-                    except socket.error:
+                        msg, addr = self.serverUDP[local_rank].recvfrom(BUFFER)
+                        print(self.serverUDP[local_rank], local_rank)
+                    except socket.error as e:
+                        print(self.serverUDP[local_rank], local_rank)
+                        print(e)
                         break
 
                     if addr not in self.DEVICES:
@@ -172,9 +192,7 @@ class TCPUDPKServer:
 
                     print(RandK_indices)
                     self.DEVICES.sort(key=lambda device: device[0])
-                    clients.sort(key=lambda client: client.getsockname)
-                    # print(self.DEVICES)
-                    # print(clients)
+                    clients.sort(key=lambda client: client.getpeername())
 
                     for client, device in zip(clients, self.DEVICES):
                         self.sendTCP_SOT(client)
@@ -208,6 +226,7 @@ class TCPUDPKClient:
         CHUNK=100,
         DELAY=5e-3,
         SEED=42,
+        LOCAL_RANK=0,
     ):
         self.SERVER = SERVER
         self.TCP_PORT = TCP_PORT
@@ -219,12 +238,13 @@ class TCPUDPKClient:
         self.CHUNK = CHUNK
         self.DELAY = DELAY
         self.SEED = SEED
+        self.LOCAL_RANK = LOCAL_RANK
 
         self.TCP_ADDR = (SERVER, TCP_PORT)
         self.UDP_ADDR = (SERVER, UDP_PORT)
 
-        self.START_OF_MESSAGE = torch.tensor(-float("inf"))
-        self.END_OF_MESSAGE = torch.tensor(float("inf"))
+        self.START_OF_MESSAGE = torch.tensor([-float("inf"), LOCAL_RANK])
+        self.END_OF_MESSAGE = torch.tensor([float("inf"), LOCAL_RANK])
 
         self.clientTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.clientTCP.connect(self.TCP_ADDR)

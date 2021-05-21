@@ -1,5 +1,5 @@
-from TCPSocket import TCPServer
-from UDPSocket import UDPServer
+from TCPSocket import TCPServer, TCPKServer
+from UDPSocket import UDPServer, UDPKServer
 from TCPUDPSocket import TCPUDPKServer
 from parameters import *
 
@@ -13,7 +13,7 @@ if use_TCPUDP:
         CHUNK=CHUNK,
         DELAY=DELAY,)
 elif use_TCP:
-    server = TCPServer(SERVER=SERVER, NUM_CLIENTS=NUM_CLIENTS, DELAY=DELAY)
+    server = TCPKServer(SERVER=SERVER, NUM_CLIENTS=NUM_CLIENTS, DELAY=DELAY)
 else:
     server = UDPServer(
         SERVER=SERVER,

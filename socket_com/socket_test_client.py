@@ -1,7 +1,7 @@
 import time
 import torch
-from TCPSocket import TCPClient
-from UDPSocket import UDPClient
+from TCPSocket import TCPClient, TCPKClient
+from UDPSocket import UDPClient, UDPKClient
 from TCPUDPSocket import TCPUDPKClient
 from parameters import *
 
@@ -13,7 +13,7 @@ if use_TCPUDP:
     for msg in MSG_SIZES:
         time_sum = 0
         for i in range(REPS):
-            client = TCPUDPKClient(SERVER=SERVER, DELAY=DELAY, CHUNK=CHUNK)
+            client = TCPUDPKClient(SERVER=SERVER, TIMEOUT=TIMEOUT, DELAY=DELAY, CHUNK=CHUNK)
 
             message = torch.cat([torch.arange(msg).unsqueeze(1), 1 * torch.arange(msg).unsqueeze(1)], dim=-1).to(
                 torch.float32
@@ -22,8 +22,6 @@ if use_TCPUDP:
             start = time.time()
             client.sendTCP_SOT()
             client.sendUDP(message)
-
-            # time.sleep(15)
             client.sendTCP_EOT()
 
             print(client.receive())
@@ -36,7 +34,7 @@ elif use_TCP:
     for msg in MSG_SIZES:
         time_sum = 0
         for i in range(REPS):
-            client = TCPClient(SERVER=SERVER, DELAY=DELAY)
+            client = TCPKClient(SERVER=SERVER, DELAY=DELAY)
 
             message = torch.cat([torch.arange(msg).unsqueeze(1), 1 * torch.arange(msg).unsqueeze(1)], dim=-1).to(
                 torch.float32
