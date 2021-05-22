@@ -9,7 +9,7 @@ if use_TCPUDP:
         SERVER=SERVER,
         NUM_CLIENTS=NUM_CLIENTS,
         TIMEOUT=TIMEOUT,
-        GRADIENT_SIZE=14728266,
+        GRADIENT_SIZE=10000,
         CHUNK=CHUNK,
         DELAY=DELAY,)
 elif use_TCP:

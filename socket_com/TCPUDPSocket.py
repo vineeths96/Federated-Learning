@@ -63,7 +63,7 @@ class TCPUDPKServer:
         print(self.serverUDP)
 
         self._indices_queue = []
-        self.accumulated_gradient = torch.zeros(self.GRADIENT_SIZE)
+        self.accumulated_gradient = torch.zeros(GRADIENT_SIZE)
 
     def encode(self, tensor):
         file = io.BytesIO()
@@ -94,12 +94,12 @@ class TCPUDPKServer:
         encoded_message = self.encode(self.END_OF_MESSAGE)
         conn.send(encoded_message)
 
-    def sendUDP(self, tensor, addr):
+    def sendUDP(self, tensor, addr, local_rank):
         messages = tensor.split(self.CHUNK)
 
         for message in messages:
             encoded_message = self.encode(message.clone())
-            self.serverUDP.sendto(encoded_message, addr)
+            self.serverUDP[local_rank].sendto(encoded_message, addr)
 
             time.sleep(self.DELAY)
 
@@ -133,8 +133,8 @@ class TCPUDPKServer:
                         print(e)
                         break
 
-                    if addr not in self.DEVICES:
-                        self.DEVICES.append(addr)
+                    if (addr, local_rank) not in self.DEVICES:
+                        self.DEVICES.append((addr, local_rank))
 
                     try:
                         decoded_msg = self.decode(msg)
@@ -207,9 +207,9 @@ class TCPUDPKServer:
                     print(self.DEVICES)
                     print(clients)
 
-                    for client, device in zip(clients, self.DEVICES):
+                    for client, (device, local_rank) in zip(clients, self.DEVICES):
                         self.sendTCP_SOT(client)
-                        self.sendUDP(accumulated_grad_indices, device)
+                        self.sendUDP(accumulated_grad_indices, device, local_rank)
                         self.sendTCP_EOT(client)
                         client.shutdown(1)
                         client.close()
@@ -224,7 +224,9 @@ class TCPUDPKServer:
     def stop(self):
         self.serverTCP.shutdown(1)
         self.serverTCP.close()
-        self.serverUDP.close()
+
+        for ind in range(self.NUM_CLIENTS):
+            self.serverUDP[ind].close()
 
 
 class TCPUDPKClient:
