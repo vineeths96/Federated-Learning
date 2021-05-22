@@ -109,13 +109,79 @@ class TCPUDPKServer:
 
             time.sleep(self.DELAY)
 
+    # def receiveTCP(self, conn):
+    #     length = None
+    #     buffer = bytearray()
+    #
+    #     readnext = True
+    #     while readnext:
+    #         msg = conn.recv(BUFFER)
+    #         buffer += msg
+    #
+    #         if len(buffer) == length:
+    #             break
+    #
+    #         while True:
+    #             if length is None:
+    #                 if b":" not in buffer:
+    #                     break
+    #
+    #                 length_str, ignored, buffer = buffer.partition(b":")
+    #                 length = int(length_str)
+    #
+    #             if len(buffer) <= length:
+    #                 readnext = False
+    #                 break
+    #
+    #             buffer = buffer[length:]
+    #
+    #             length = None
+    #             break
+    #
+    #     msg = self.decode(buffer)
+    #
+    #     return msg
+
+
     def receive(self, conn, addr):
+        print(conn)
         buffer = []
         readnext = True
         while readnext:
             try:
-                msg = conn.recv(BUFFER)
-                decoded_msg = self.decode(msg)
+                length = None
+                buffer1 = bytearray()
+
+                readnext1 = True
+                while readnext1:
+                    msg = conn.recv(BUFFER)
+                    buffer1 += msg
+
+                    if len(buffer1) == length:
+                        break
+
+                    while True:
+                        if length is None:
+                            if b":" not in buffer1:
+                                break
+
+                            length_str, ignored, buffer1 = buffer1.partition(b":")
+                            length = int(length_str)
+
+                        if len(buffer1) <= length:
+                            readnext1 = False
+                            break
+
+                        buffer1 = buffer1[length:]
+
+                        length = None
+                        break
+
+                decoded_msg = self.decode(buffer1)
+
+                # msg = conn.recv(BUFFER)
+                # decoded_msg = self.decode(msg)
+                # decoded_msg = self.receiveTCP(conn)
                 flag = decoded_msg[0]
                 local_rank = int(decoded_msg[1].item())
                 conn.setblocking(False)
@@ -125,13 +191,15 @@ class TCPUDPKServer:
 
             print(local_rank, flag)
             if torch.isinf(flag) and torch.sign(flag) > 0:
+                # conn.setblocking(1)
                 readnext = False
 
             if torch.isinf(flag) and torch.sign(flag) < 0:
                 while True:
                     try:
                         msg, addr = self.serverUDP[local_rank].recvfrom(BUFFER)
-                        print(self.serverUDP[local_rank], local_rank)
+                        # print(self.serverUDP[local_rank], local_rank)
+                        # print(self.decode(msg))
                     except socket.error as e:
                         print(self.serverUDP[local_rank], local_rank)
                         print(e)
@@ -175,6 +243,8 @@ class TCPUDPKServer:
                 clients.append(conn)
                 client_count += 1
 
+                print(client_count)
+
                 thread = threading.Thread(target=self.receive, args=(conn, addr))
                 thread.start()
                 thread.join()
@@ -191,8 +261,13 @@ class TCPUDPKServer:
                     accumulated_grad_indices = torch.vstack([RandK_indices, RandK_flat_grad]).T
 
                     print(RandK_indices)
+
+                    print(self.DEVICES)
+                    print(clients)
                     self.DEVICES.sort(key=lambda device: device[0])
                     clients.sort(key=lambda client: client.getpeername())
+                    print(self.DEVICES)
+                    print(clients)
 
                     for client, device in zip(clients, self.DEVICES):
                         self.sendTCP_SOT(client)
@@ -241,7 +316,7 @@ class TCPUDPKClient:
         self.LOCAL_RANK = LOCAL_RANK
 
         self.TCP_ADDR = (SERVER, TCP_PORT)
-        self.UDP_ADDR = (SERVER, UDP_PORT)
+        self.UDP_ADDR = (SERVER, UDP_PORT + LOCAL_RANK)
 
         self.START_OF_MESSAGE = torch.tensor([-float("inf"), LOCAL_RANK])
         self.END_OF_MESSAGE = torch.tensor([float("inf"), LOCAL_RANK])
@@ -261,6 +336,22 @@ class TCPUDPKClient:
 
         return encoded
 
+    def encodeTCP(self, tensor):
+        file = io.BytesIO()
+        torch.save(tensor, file)
+
+        packet_size = len(file.getvalue())
+        header = "{0}:".format(packet_size)
+        header = bytes(header.encode())
+
+        encoded = bytearray()
+        encoded += header
+
+        file.seek(0)
+        encoded += file.read()
+
+        return encoded
+
     def decode(self, buffer):
         tensor = torch.load(io.BytesIO(buffer))
 
@@ -274,11 +365,11 @@ class TCPUDPKClient:
         # self.send_EOT(conn)
 
     def sendTCP_SOT(self):
-        encoded_message = self.encode(self.START_OF_MESSAGE)
+        encoded_message = self.encodeTCP(self.START_OF_MESSAGE)
         self.clientTCP.send(encoded_message)
 
     def sendTCP_EOT(self):
-        encoded_message = self.encode(self.END_OF_MESSAGE)
+        encoded_message = self.encodeTCP(self.END_OF_MESSAGE)
         self.clientTCP.send(encoded_message)
 
     def sendUDP(self, tensor):

@@ -1,5 +1,6 @@
 import time
 import torch
+import argparse
 from TCPSocket import TCPClient, TCPKClient
 from UDPSocket import UDPClient, UDPKClient
 from TCPUDPSocket import TCPUDPKClient
@@ -10,10 +11,17 @@ GRADIENT_SIZE = 14728266
 
 
 if use_TCPUDP:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--local_rank", type=int, default=0)
+    parser.add_argument("--world_size", type=int, default=2)
+    args = parser.parse_args()
+    local_rank = args.local_rank
+    world_size = args.world_size
+
     for msg in MSG_SIZES:
         time_sum = 0
         for i in range(REPS):
-            client = TCPUDPKClient(SERVER=SERVER, TIMEOUT=TIMEOUT, DELAY=DELAY, CHUNK=CHUNK)
+            client = TCPUDPKClient(SERVER=SERVER, TIMEOUT=TIMEOUT, DELAY=DELAY, CHUNK=CHUNK, LOCAL_RANK=local_rank)
 
             message = torch.cat([torch.arange(msg).unsqueeze(1), 1 * torch.arange(msg).unsqueeze(1)], dim=-1).to(
                 torch.float32
