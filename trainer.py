@@ -19,7 +19,8 @@ config = dict(
     num_epochs=1,
     batch_size=128,
     # communication="TCP",
-    communication="UDP",
+    # communication="UDP",
+    communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=20,
     # architecture="ResNet50",
@@ -43,6 +44,7 @@ config = dict(
 
 
 def initiate_distributed(local_rank, world_size):
+    config["local_rank"] = local_rank
     config["num_clients"] = world_size
 
     print(f"[{os.getpid()}] Initializing Distributed Group with: {config['server_address']}")
@@ -57,7 +59,7 @@ def initiate_distributed(local_rank, world_size):
 
 def train(local_rank, world_size):
     set_seed(config["seed"])
-    logger = Logger(config, local_rank)
+    logger = Logger(config)
 
     # device = torch.device(f"cuda:{local_rank}")
     device = torch.device(f"cuda:{0}")
@@ -134,7 +136,7 @@ def train(local_rank, world_size):
     best_accuracy = {"top1": 0, "top5": 0}
 
     global_iteration_count = 0
-    model = CIFAR(device, timer, config["architecture"], local_rank, world_size, config["seed"] + local_rank)
+    model = CIFAR(device, timer, config)
 
     send_buffers = [torch.zeros_like(param) for param in model.parameters]
 

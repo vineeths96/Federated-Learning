@@ -9,14 +9,14 @@ class Logger:
     Logs information and model statistics
     """
 
-    def __init__(self, config, local_rank):
+    def __init__(self, config):
         self._log_path = f"./logs/{self.get_log_path().strftime('%Y_%m_%d_%H_%M_%S')}_{config['architecture']}"
 
         if local_rank == 0:
             os.makedirs(self._log_path, exist_ok=True)
 
-        self._local_rank = local_rank
         self._config = config
+        self._local_rank = config["local_rank"]
         self._start = datetime.datetime.now()
 
         metric_list = {

@@ -4,6 +4,7 @@ import random
 import numpy as np
 from socket_com.TCPSocket import TCPServer, TCPKServer
 from socket_com.UDPSocket import UDPServer, UDPKServer
+from socket_com.TCPUDPSocket import TCPUDPServer, TCPUDPKServer
 
 
 config = dict(
@@ -55,6 +56,16 @@ def start_server(world_size):
                 DELAY=config["delay"],
                 SEED=config["seed"],
             )
+        elif config["communication"] == "TCPUDP":
+            server = TCPUDPServer(
+                SERVER=config["server_address"],
+                NUM_CLIENTS=config["num_clients"],
+                TIMEOUT=config["timeout"],
+                GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
+                CHUNK=config["chunk"],
+                DELAY=config["delay"],
+                SEED=config["seed"],
+            )
         else:
             raise NotImplementedError("Communication method not implemented.")
     elif config["reducer"] == "GlobalRandKReducer":
@@ -69,6 +80,17 @@ def start_server(world_size):
             )
         elif config["communication"] == "UDP":
             server = UDPKServer(
+                SERVER=config["server_address"],
+                NUM_CLIENTS=config["num_clients"],
+                TIMEOUT=config["timeout"],
+                GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
+                K=config["K"],
+                CHUNK=config["chunk"],
+                DELAY=config["delay"],
+                SEED=config["seed"],
+            )
+        elif config["communication"] == "TCPUDP":
+            server = TCPUDPKServer(
                 SERVER=config["server_address"],
                 NUM_CLIENTS=config["num_clients"],
                 TIMEOUT=config["timeout"],

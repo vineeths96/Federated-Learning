@@ -13,13 +13,15 @@ class CIFAR:
     Instantiates a deep model of the specified architecture on the specified device.
     """
 
-    def __init__(self, device, timer, architecture, local_rank, world_size, seed):
+    def __init__(self, device, timer, config):
         self._device = device
         self._timer = timer
-        self._architecture = architecture
-        self._local_rank = local_rank
-        self._world_size = world_size
-        self._seed = seed
+        self._config = config
+
+        self._architecture = config["architecture"]
+        self._local_rank = config["local_rank"]
+        self._world_size = config["num_clients"]
+        self._seed = config["seed"] + config["local_rank"]
 
         self._epoch = 0
         self._model = self._create_model()

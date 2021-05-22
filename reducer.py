@@ -29,6 +29,7 @@ from compressors import (
 from seed import set_seed
 from socket_com.TCPSocket import TCPClient, TCPKClient
 from socket_com.UDPSocket import UDPClient, UDPKClient
+from socket_com.TCPUDPSocket import TCPUDPClient, TCPUDPKClient
 
 
 class Reducer:
@@ -103,6 +104,20 @@ class NoneAllReducer(Reducer):
                     CHUNK=self._config["chunk"],
                     DELAY=self._config["delay"],
                     SEED=self._config["seed"],
+                )
+
+                client_grad = torch.vstack(
+                    [torch.arange(self._config["gradient_size"][self._config["architecture"]]), flat_grad.buffer.cpu()]
+                ).T
+            elif self._config["communication"] == "TCPUDP":
+                client = TCPUDPClient(
+                    SERVER=self._config["server_address"],
+                    TIMEOUT=self._config["timeout"],
+                    GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
+                    CHUNK=self._config["chunk"],
+                    DELAY=self._config["delay"],
+                    SEED=self._config["seed"],
+                    LOCAL_RANK=self._config["local_rank"],
                 )
 
                 client_grad = torch.vstack(
@@ -191,6 +206,17 @@ class GlobalRandKReducer(Reducer):
                     CHUNK=self._config["chunk"],
                     DELAY=self._config["delay"],
                     SEED=self._config["seed"],
+                )
+            elif self._config["communication"] == "TCPUDP":
+                client = TCPUDPKClient(
+                    SERVER=self._config["server_address"],
+                    TIMEOUT=self._config["timeout"],
+                    GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
+                    K=self._config["K"],
+                    CHUNK=self._config["chunk"],
+                    DELAY=self._config["delay"],
+                    SEED=self._config["seed"],
+                    LOCAL_RANK=self._config["local_rank"],
                 )
             else:
                 raise NotImplementedError("Communication method not implemented.")
