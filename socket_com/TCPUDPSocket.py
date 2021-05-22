@@ -155,7 +155,6 @@ class TCPUDPKServer:
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
         self.accumulated_gradient[indices] += gradient
-        print(conn, "Done")
 
         return
 
@@ -169,7 +168,7 @@ class TCPUDPKServer:
             client_count = 0
 
             while True:
-                while True:
+                while client_count < self.NUM_CLIENTS:
                     conn, addr = self.serverTCP.accept()
                     clients.append(conn)
                     client_count += 1
@@ -182,13 +181,10 @@ class TCPUDPKServer:
                     print("C", client_count)
                     print("T", threading.activeCount())
 
-                    if threading.activeCount() == 1:
-                        break
-                
-                print("Hello")
+                # print("Hello")
                 for thread in threads:
                     thread.join()
-                print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+                # print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
                 if threading.activeCount() == 1 and client_count == self.NUM_CLIENTS:
                     if not self._indices_queue:
