@@ -11,7 +11,8 @@ if use_TCPUDP:
         TIMEOUT=TIMEOUT,
         GRADIENT_SIZE=14728266,
         CHUNK=CHUNK,
-        DELAY=DELAY,)
+        DELAY=DELAY,
+    )
 elif use_TCP:
     server = TCPKServer(SERVER=SERVER, NUM_CLIENTS=NUM_CLIENTS, DELAY=DELAY)
 else:

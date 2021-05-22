@@ -178,10 +178,14 @@ class TCPUDPServer:
                     self.DEVICES.sort(key=lambda device: device[0])
                     clients.sort(key=lambda client: client.getpeername())
 
-                    accumulated_grad_indices = torch.vstack([torch.arange(self.GRADIENT_SIZE), self.accumulated_gradient]).T
+                    accumulated_grad_indices = torch.vstack(
+                        [torch.arange(self.GRADIENT_SIZE), self.accumulated_gradient]
+                    ).T
 
                     for client, (device, local_rank) in zip(clients, self.DEVICES):
-                        sending_thread = threading.Thread(target=self.send, args=(accumulated_grad_indices, client, device, local_rank))
+                        sending_thread = threading.Thread(
+                            target=self.send, args=(accumulated_grad_indices, client, device, local_rank)
+                        )
                         sending_threads.append(sending_thread)
                         sending_thread.start()
 
@@ -318,26 +322,6 @@ class TCPUDPClient:
         # print(f"Length of message received: {msg.shape[0]}")
 
         return msg
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class TCPUDPKServer:
@@ -524,7 +508,9 @@ class TCPUDPKServer:
                     clients.sort(key=lambda client: client.getpeername())
 
                     for client, (device, local_rank) in zip(clients, self.DEVICES):
-                        sending_thread = threading.Thread(target=self.send, args=(accumulated_grad_indices, client, device, local_rank))
+                        sending_thread = threading.Thread(
+                            target=self.send, args=(accumulated_grad_indices, client, device, local_rank)
+                        )
                         sending_threads.append(sending_thread)
                         sending_thread.start()
 

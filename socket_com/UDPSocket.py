@@ -133,7 +133,9 @@ class UDPServer:
                 if len(self.DEVICES) < self.NUM_CLIENTS:
                     continue
 
-                accumulated_grad_indices = torch.vstack([torch.arange(self.GRADIENT_SIZE), self.accumulated_gradient]).T
+                accumulated_grad_indices = torch.vstack(
+                    [torch.arange(self.GRADIENT_SIZE), self.accumulated_gradient]
+                ).T
 
                 for client in self.DEVICES:
                     self.send(accumulated_grad_indices[:10000, :], client)
