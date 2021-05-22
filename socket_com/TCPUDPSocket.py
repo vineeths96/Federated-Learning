@@ -49,12 +49,6 @@ class TCPUDPKServer:
         # buffer_size = self.serverTCP.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
         # print("TCP Buffer size [After]:%d" % buffer_size)
 
-        # self.serverUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # self.serverUDP.bind(self.UDP_ADDR)
-        # self.serverUDP.settimeout(self.TIMEOUT)
-        # buffer_size = self.serverUDP.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
-        # print("Buffer size [After]:%d" % buffer_size)
-
         self.UDP_PORT_LIST = [UDP_PORT + i for i in range(NUM_CLIENTS)]
         self.UDP_ADDR_LIST = [(SERVER, UDP_PORT_ELEMENT) for UDP_PORT_ELEMENT in self.UDP_PORT_LIST]
         self.serverUDP = [None] * NUM_CLIENTS
@@ -109,79 +103,15 @@ class TCPUDPKServer:
 
             time.sleep(self.DELAY)
 
-    # def receiveTCP(self, conn):
-    #     length = None
-    #     buffer = bytearray()
-    #
-    #     readnext = True
-    #     while readnext:
-    #         msg = conn.recv(BUFFER)
-    #         buffer += msg
-    #
-    #         if len(buffer) == length:
-    #             break
-    #
-    #         while True:
-    #             if length is None:
-    #                 if b":" not in buffer:
-    #                     break
-    #
-    #                 length_str, ignored, buffer = buffer.partition(b":")
-    #                 length = int(length_str)
-    #
-    #             if len(buffer) <= length:
-    #                 readnext = False
-    #                 break
-    #
-    #             buffer = buffer[length:]
-    #
-    #             length = None
-    #             break
-    #
-    #     msg = self.decode(buffer)
-    #
-    #     return msg
-
 
     def receive(self, conn, addr):
-        print(conn)
+        # print(conn)
         buffer = []
         readnext = True
         while readnext:
             try:
-                length = None
-                buffer1 = bytearray()
-
-                readnext1 = True
-                while readnext1:
-                    msg = conn.recv(BUFFER)
-                    buffer1 += msg
-
-                    if len(buffer1) == length:
-                        break
-
-                    while True:
-                        if length is None:
-                            if b":" not in buffer1:
-                                break
-
-                            length_str, ignored, buffer1 = buffer1.partition(b":")
-                            length = int(length_str)
-
-                        if len(buffer1) <= length:
-                            readnext1 = False
-                            break
-
-                        buffer1 = buffer1[length:]
-
-                        length = None
-                        break
-
-                decoded_msg = self.decode(buffer1)
-
-                # msg = conn.recv(BUFFER)
-                # decoded_msg = self.decode(msg)
-                # decoded_msg = self.receiveTCP(conn)
+                msg = conn.recv(BUFFER)
+                decoded_msg = self.decode(msg)
                 flag = decoded_msg[0]
                 local_rank = int(decoded_msg[1].item())
                 conn.setblocking(False)
@@ -191,15 +121,13 @@ class TCPUDPKServer:
 
             print(local_rank, flag)
             if torch.isinf(flag) and torch.sign(flag) > 0:
-                # conn.setblocking(1)
+                conn.setblocking(1)
                 readnext = False
 
             if torch.isinf(flag) and torch.sign(flag) < 0:
                 while True:
                     try:
                         msg, addr = self.serverUDP[local_rank].recvfrom(BUFFER)
-                        # print(self.serverUDP[local_rank], local_rank)
-                        # print(self.decode(msg))
                     except socket.error as e:
                         print(self.serverUDP[local_rank], local_rank)
                         print(e)
@@ -227,6 +155,7 @@ class TCPUDPKServer:
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
         self.accumulated_gradient[indices] += gradient
+        print(conn, "Done")
 
         return
 
@@ -236,19 +165,30 @@ class TCPUDPKServer:
 
         try:
             clients = []
+            threads = []
             client_count = 0
 
             while True:
-                conn, addr = self.serverTCP.accept()
-                clients.append(conn)
-                client_count += 1
+                while True:
+                    conn, addr = self.serverTCP.accept()
+                    clients.append(conn)
+                    client_count += 1
 
-                print(client_count)
+                    print(client_count)
 
-                thread = threading.Thread(target=self.receive, args=(conn, addr))
-                thread.start()
-                thread.join()
-                # print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+                    thread = threading.Thread(target=self.receive, args=(conn, addr))
+                    threads.append(thread)
+                    thread.start()
+                    print("C", client_count)
+                    print("T", threading.activeCount())
+
+                    if threading.activeCount() == 1:
+                        break
+                
+                print("Hello")
+                for thread in threads:
+                    thread.join()
+                print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
                 if threading.activeCount() == 1 and client_count == self.NUM_CLIENTS:
                     if not self._indices_queue:
@@ -264,8 +204,10 @@ class TCPUDPKServer:
 
                     print(self.DEVICES)
                     print(clients)
+
                     self.DEVICES.sort(key=lambda device: device[0])
                     clients.sort(key=lambda client: client.getpeername())
+
                     print(self.DEVICES)
                     print(clients)
 
@@ -336,21 +278,21 @@ class TCPUDPKClient:
 
         return encoded
 
-    def encodeTCP(self, tensor):
-        file = io.BytesIO()
-        torch.save(tensor, file)
-
-        packet_size = len(file.getvalue())
-        header = "{0}:".format(packet_size)
-        header = bytes(header.encode())
-
-        encoded = bytearray()
-        encoded += header
-
-        file.seek(0)
-        encoded += file.read()
-
-        return encoded
+    # def encodeTCP(self, tensor):
+    #     file = io.BytesIO()
+    #     torch.save(tensor, file)
+    #
+    #     packet_size = len(file.getvalue())
+    #     header = "{0}:".format(packet_size)
+    #     header = bytes(header.encode())
+    #
+    #     encoded = bytearray()
+    #     encoded += header
+    #
+    #     file.seek(0)
+    #     encoded += file.read()
+    #
+    #     return encoded
 
     def decode(self, buffer):
         tensor = torch.load(io.BytesIO(buffer))
@@ -365,11 +307,11 @@ class TCPUDPKClient:
         # self.send_EOT(conn)
 
     def sendTCP_SOT(self):
-        encoded_message = self.encodeTCP(self.START_OF_MESSAGE)
+        encoded_message = self.encode(self.START_OF_MESSAGE)
         self.clientTCP.send(encoded_message)
 
     def sendTCP_EOT(self):
-        encoded_message = self.encodeTCP(self.END_OF_MESSAGE)
+        encoded_message = self.encode(self.END_OF_MESSAGE)
         self.clientTCP.send(encoded_message)
 
     def sendUDP(self, tensor):
