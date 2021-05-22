@@ -1,15 +1,15 @@
 from TCPSocket import TCPServer, TCPKServer
 from UDPSocket import UDPServer, UDPKServer
-from TCPUDPSocket import TCPUDPKServer
+from TCPUDPSocket import TCPUDPServer, TCPUDPKServer
 from parameters import *
 
 
 if use_TCPUDP:
-    server = TCPUDPKServer(
+    server = TCPUDPServer(
         SERVER=SERVER,
         NUM_CLIENTS=NUM_CLIENTS,
         TIMEOUT=TIMEOUT,
-        GRADIENT_SIZE=10000,
+        GRADIENT_SIZE=14728266,
         CHUNK=CHUNK,
         DELAY=DELAY,)
 elif use_TCP:
