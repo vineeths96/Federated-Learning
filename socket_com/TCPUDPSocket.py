@@ -46,8 +46,6 @@ class TCPUDPKServer:
         self.serverTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverTCP.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.serverTCP.bind(self.TCP_ADDR)
-        # buffer_size = self.serverTCP.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
-        # print("TCP Buffer size [After]:%d" % buffer_size)
 
         self.UDP_PORT_LIST = [UDP_PORT + i for i in range(NUM_CLIENTS)]
         self.UDP_ADDR_LIST = [(SERVER, UDP_PORT_ELEMENT) for UDP_PORT_ELEMENT in self.UDP_PORT_LIST]
@@ -57,10 +55,6 @@ class TCPUDPKServer:
             self.serverUDP[ind] = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.serverUDP[ind].bind(self.UDP_ADDR_LIST[ind])
             self.serverUDP[ind].settimeout(self.TIMEOUT)
-            # buffer_size = self.serverUDP[ind].getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
-            # print("Buffer size [After]:%d" % buffer_size)
-
-        print(self.serverUDP)
 
         self._indices_queue = []
         self.accumulated_gradient = torch.zeros(GRADIENT_SIZE)
@@ -103,9 +97,14 @@ class TCPUDPKServer:
 
             time.sleep(self.DELAY)
 
+    def send(self, accumulated_grad_indices, client, device, local_rank):
+        self.sendTCP_SOT(client)
+        self.sendUDP(accumulated_grad_indices, device, local_rank)
+        self.sendTCP_EOT(client)
+        client.shutdown(1)
+        client.close()
 
     def receive(self, conn, addr):
-        # print(conn)
         buffer = []
         readnext = True
         while readnext:
@@ -119,18 +118,15 @@ class TCPUDPKServer:
                 print(e)
                 pass
 
-            print(local_rank, flag)
             if torch.isinf(flag) and torch.sign(flag) > 0:
-                conn.setblocking(1)
+                conn.setblocking(True)
                 readnext = False
 
             if torch.isinf(flag) and torch.sign(flag) < 0:
                 while True:
                     try:
                         msg, addr = self.serverUDP[local_rank].recvfrom(BUFFER)
-                    except socket.error as e:
-                        print(self.serverUDP[local_rank], local_rank)
-                        print(e)
+                    except socket.error:
                         break
 
                     if (addr, local_rank) not in self.DEVICES:
@@ -164,7 +160,8 @@ class TCPUDPKServer:
 
         try:
             clients = []
-            threads = []
+            receiving_threads = []
+            sending_threads = []
             client_count = 0
 
             while True:
@@ -173,16 +170,11 @@ class TCPUDPKServer:
                     clients.append(conn)
                     client_count += 1
 
-                    print(client_count)
+                    receiving_thread = threading.Thread(target=self.receive, args=(conn, addr))
+                    receiving_threads.append(receiving_thread)
+                    receiving_thread.start()
 
-                    thread = threading.Thread(target=self.receive, args=(conn, addr))
-                    threads.append(thread)
-                    thread.start()
-                    print("C", client_count)
-                    print("T", threading.activeCount())
-
-                # print("Hello")
-                for thread in threads:
+                for thread in receiving_threads:
                     thread.join()
                 # print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
@@ -196,25 +188,22 @@ class TCPUDPKServer:
                     RandK_flat_grad = self.accumulated_gradient[RandK_indices]
                     accumulated_grad_indices = torch.vstack([RandK_indices, RandK_flat_grad]).T
 
-                    print(RandK_indices)
-
-                    print(self.DEVICES)
-                    print(clients)
+                    # print(RandK_indices)
 
                     self.DEVICES.sort(key=lambda device: device[0])
                     clients.sort(key=lambda client: client.getpeername())
 
-                    print(self.DEVICES)
-                    print(clients)
-
                     for client, (device, local_rank) in zip(clients, self.DEVICES):
-                        self.sendTCP_SOT(client)
-                        self.sendUDP(accumulated_grad_indices, device, local_rank)
-                        self.sendTCP_EOT(client)
-                        client.shutdown(1)
-                        client.close()
+                        sending_thread = threading.Thread(target=self.send, args=(accumulated_grad_indices, client, device, local_rank))
+                        sending_threads.append(sending_thread)
+                        sending_thread.start()
+
+                    for thread in sending_threads:
+                        thread.join()
 
                     clients = []
+                    receiving_threads = []
+                    sending_threads = []
                     client_count = 0
                     self.DEVICES = []
                     self.accumulated_gradient.zero_()
@@ -276,22 +265,6 @@ class TCPUDPKClient:
 
         return encoded
 
-    # def encodeTCP(self, tensor):
-    #     file = io.BytesIO()
-    #     torch.save(tensor, file)
-    #
-    #     packet_size = len(file.getvalue())
-    #     header = "{0}:".format(packet_size)
-    #     header = bytes(header.encode())
-    #
-    #     encoded = bytearray()
-    #     encoded += header
-    #
-    #     file.seek(0)
-    #     encoded += file.read()
-    #
-    #     return encoded
-
     def decode(self, buffer):
         tensor = torch.load(io.BytesIO(buffer))
 
@@ -333,6 +306,7 @@ class TCPUDPKClient:
                 pass
 
             if torch.isinf(flag) and torch.sign(flag) > 0:
+                self.clientTCP.setblocking(True)
                 readnext = False
 
             if torch.isinf(flag) and torch.sign(flag) < 0:
