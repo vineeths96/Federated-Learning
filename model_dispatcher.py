@@ -208,7 +208,7 @@ class CIFAR:
             mean_metrics.add(metrics)
 
         # print("Test Acc", mean_metrics.values()["top1_accuracy"])
-        mean_metrics.reduce()
+        # mean_metrics.reduce()
         test_model.train()
 
         return mean_metrics

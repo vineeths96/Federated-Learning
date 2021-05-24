@@ -27,7 +27,7 @@ config = dict(
     architecture="VGG16",
     gradient_size={"ResNet50": 23520842, "VGG16": 14728266},
     local_steps=1,
-    chunk=2000,
+    chunk=5000,
     delay=10e-3,
     K=25000,
     # compression=1/1000,
@@ -179,7 +179,7 @@ def train(local_rank, world_size):
         scheduler.step()
 
         with timer("epoch_metrics.collect", epoch, verbosity=2):
-            epoch_metrics.reduce()
+            # epoch_metrics.reduce()
             if local_rank == 0:
                 for key, value in epoch_metrics.values().items():
                     logger.log_info(
