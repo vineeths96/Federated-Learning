@@ -86,6 +86,7 @@ class NoneAllReducer(Reducer):
 
         with self._timer("reduce.flat_pack"):
             flat_grad = TensorBuffer(grad_in)
+            print(flat_grad.buffer.nelement())
 
         with self._timer("reduce.allreduce", verbosity=2):
             if self._config["communication"] == "TCP":
