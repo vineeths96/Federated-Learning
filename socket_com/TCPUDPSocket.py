@@ -610,6 +610,11 @@ class TCPUDPKClient:
 
             time.sleep(self.DELAY)
 
+    def send(self, tensor):
+        self.sendTCP_SOT()
+        self.sendUDP(tensor)
+        self.sendTCP_EOT()
+
     def receive(self):
         buffer = []
         readnext = True
