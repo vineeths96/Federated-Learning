@@ -95,21 +95,25 @@ class UDPServer:
     def receive(self):
         buffer = []
         readnext = True
-        while readnext:
-            msg, addr = self.server.recvfrom(BUFFER)
 
-            if addr not in self.DEVICES:
-                self.DEVICES.append(addr)
+        try:
+            while readnext:
+                msg, addr = self.server.recvfrom(BUFFER)
 
-            try:
-                decoded_msg = self.decode(msg)
-            except:
-                continue
+                if addr not in self.DEVICES:
+                    self.DEVICES.append(addr)
 
-            if not len(decoded_msg.shape) and torch.isinf(decoded_msg):
-                break
+                try:
+                    decoded_msg = self.decode(msg)
+                except:
+                    continue
 
-            buffer.append(decoded_msg)
+                if not len(decoded_msg.shape) and torch.isinf(decoded_msg):
+                    break
+
+                buffer.append(decoded_msg)
+        except:
+            pass
 
         if len(buffer) > 1:
             msg = torch.cat(buffer)
