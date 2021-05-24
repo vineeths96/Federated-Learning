@@ -95,6 +95,7 @@ class UDPServer:
     def receive(self):
         buffer = []
         readnext = True
+        msg, addr = None, None
 
         try:
             while readnext:
@@ -116,8 +117,8 @@ class UDPServer:
 
                 buffer.append(decoded_msg)
         except:
-            print(1111)
-            pass
+            if addr and addr not in self.DEVICES:
+                    self.DEVICES.append(addr)
 
         if len(buffer) > 1:
             msg = torch.cat(buffer)
@@ -216,18 +217,22 @@ class UDPClient:
     def receive(self):
         buffer = []
         readnext = True
-        while readnext:
-            msg, addr = self.client.recvfrom(BUFFER)
 
-            try:
-                decoded_msg = self.decode(msg)
-            except:
-                continue
+        try:
+            while readnext:
+                msg, addr = self.client.recvfrom(BUFFER)
 
-            if not len(decoded_msg.shape) and torch.isinf(decoded_msg):
-                break
+                try:
+                    decoded_msg = self.decode(msg)
+                except:
+                    continue
 
-            buffer.append(decoded_msg)
+                if not len(decoded_msg.shape) and torch.isinf(decoded_msg):
+                    break
+
+                buffer.append(decoded_msg)
+        except socket.error:
+            pass
 
         if len(buffer) > 1:
             msg = torch.cat(buffer)
@@ -334,6 +339,7 @@ class UDPKServer:
     def receive(self):
         buffer = []
         readnext = True
+        msg, addr = None, None
 
         try:
             while readnext:
@@ -354,9 +360,9 @@ class UDPKServer:
                     break
 
                 buffer.append(decoded_msg)
-        except:
-            print(1111)
-            pass
+        except socket.error:
+            if addr and addr not in self.DEVICES:
+                    self.DEVICES.append(addr)
 
         # TODO Handle buffer [] case
         if len(buffer) > 1:
@@ -467,18 +473,22 @@ class UDPKClient:
     def receive(self):
         buffer = []
         readnext = True
-        while readnext:
-            msg, addr = self.client.recvfrom(BUFFER)
 
-            try:
-                decoded_msg = self.decode(msg)
-            except:
-                continue
+        try:
+            while readnext:
+                msg, addr = self.client.recvfrom(BUFFER)
 
-            if not len(decoded_msg.shape) and torch.isinf(decoded_msg):
-                break
+                try:
+                    decoded_msg = self.decode(msg)
+                except:
+                    continue
 
-            buffer.append(decoded_msg)
+                if not len(decoded_msg.shape) and torch.isinf(decoded_msg):
+                    break
+
+                buffer.append(decoded_msg)
+        except socket.error:
+            pass
 
         # TODO Handle buffer [] case
         if len(buffer) > 1:
