@@ -131,7 +131,7 @@ class NoneAllReducer(Reducer):
 
             if self._config["communication"] == "TCP":
                 aggregated_grad = client.receive().to(self._device)
-            elif self._config["communication"] == "UDP":
+            elif self._config["communication"] == "UDP" or self._config["communication"] == "TCPUDP":
                 aggregated_grad_indices = client.receive().to(self._device)
                 aggregated_grad = torch.zeros(
                     self._config["gradient_size"][self._config["architecture"]], device=self._device
