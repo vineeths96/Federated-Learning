@@ -138,7 +138,7 @@ class UDPServer:
                 ).T
 
                 for client in self.DEVICES:
-                    self.send(accumulated_grad_indices[:10000, :], client)
+                    self.send(accumulated_grad_indices, client)
 
                 self.DEVICES = []
                 self.accumulated_gradient.zero_()
