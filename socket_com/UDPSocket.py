@@ -364,7 +364,6 @@ class UDPKServer:
             if addr and addr not in self.DEVICES:
                     self.DEVICES.append(addr)
 
-        # TODO Handle buffer [] case
         if len(buffer) > 1:
             msg = torch.cat(buffer)
         else:
@@ -490,7 +489,6 @@ class UDPKClient:
         except socket.error:
             pass
 
-        # TODO Handle buffer [] case
         if len(buffer) > 1:
             msg = torch.cat(buffer)
         else:
