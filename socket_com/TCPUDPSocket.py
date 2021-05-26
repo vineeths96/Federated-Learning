@@ -835,13 +835,13 @@ class TCPUDPTopKServer:
                 # print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
                 if threading.activeCount() == 1 and client_count == self.NUM_CLIENTS:
-                    top_size = min(flat_grad.buffer.nelement(), self._K)
+                    top_size = min(self.accumulated_gradient.nelement(), self.K)
 
                     _, TopK_indices = torch.topk(self.accumulated_gradient.abs(), top_size, sorted=False)
                     TopK_flat_grad = self.accumulated_gradient[TopK_indices].contiguous()
                     TopK_grad_indices = torch.vstack([TopK_indices, TopK_flat_grad.cpu()]).T
 
-                    # print(TopK_indices)
+                    # print(TopK_grad_indices)
 
                     self.DEVICES.sort(key=lambda device: device[0])
                     clients.sort(key=lambda client: client.getpeername())
