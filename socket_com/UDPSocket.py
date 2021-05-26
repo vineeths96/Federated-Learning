@@ -130,7 +130,9 @@ class UDPServer:
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
-        self.accumulated_gradient[indices] += gradient
+        received_coordinates_fraction = gradient.nelement() / self.GRADIENT_SIZE
+
+        self.accumulated_gradient[indices] += 1/ received_coordinates_fraction * gradient
 
     def start(self):
         print(f"[LISTENING] Server is listening on {self.SERVER}")
@@ -374,7 +376,9 @@ class UDPKServer:
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
-        self.accumulated_gradient[indices] += gradient
+        received_coordinates_fraction = gradient.nelement() / self.K
+
+        self.accumulated_gradient[indices] += 1/ received_coordinates_fraction * gradient
 
         # time.sleep(self.DELAY)
         # self.send(msg, addr)

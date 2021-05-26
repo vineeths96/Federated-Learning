@@ -146,7 +146,9 @@ class TCPUDPServer:
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
-        self.accumulated_gradient[indices] += gradient
+        received_coordinates_fraction = gradient.nelement() / self.GRADIENT_SIZE
+
+        self.accumulated_gradient[indices] += 1/ received_coordinates_fraction * gradient
 
         return
 
@@ -469,7 +471,9 @@ class TCPUDPKServer:
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
-        self.accumulated_gradient[indices] += gradient
+        received_coordinates_fraction = gradient.nelement() / self.K
+
+        self.accumulated_gradient[indices] += 1/ received_coordinates_fraction * gradient
 
         return
 

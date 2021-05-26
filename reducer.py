@@ -140,7 +140,9 @@ class NoneAllReducer(Reducer):
                 indices = aggregated_grad_indices[:, 0].long()
                 gradient = aggregated_grad_indices[:, 1]
 
-                aggregated_grad[indices] = gradient
+                received_coordinates_fraction = gradient.nelement() / self._config["gradient_size"][self._config["architecture"]],
+
+                aggregated_grad[indices] = 1/ received_coordinates_fraction * gradient
             else:
                 raise NotImplementedError("Communication method not implemented.")
 
@@ -238,39 +240,18 @@ class GlobalRandKReducer(Reducer):
             )
             received_coordinates_fraction = received_coordinates.nelement() / self._config["K"]
 
-            try:
-                aggregated_RandK_grad = 1 / received_coordinates_fraction * aggregated_RandK_grad
-            except:
-                print(aggregated_RandK_indices_grad.shape)
-                print(received_coordinates_fraction)
-                exit(3)
+            aggregated_RandK_grad = 1 / received_coordinates_fraction * aggregated_RandK_grad
 
-            nonreceived_coordinates = torch.tensor(
-                np.setdiff1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy())
-            )
-
-            delay_received_coordinates = torch.tensor(
-                np.setdiff1d(aggregated_RandK_indices.unique().cpu().numpy(), RandK_indices.unique().cpu().numpy())
-            )
-
-            if delay_received_coordinates.nelement() > 0:
-                print("Delay", delay_received_coordinates.nelement())
-                exit(7)
-
-            # if (
-            #     RandK_indices.nelement()
-            #     == received_coordinates.unique().nelement() + nonreceived_coordinates.unique().nelement()
-            # ):
-            #     print(RandK_indices.nelement() == received_coordinates.nelement() + nonreceived_coordinates.nelement())
-            # else:
-            #     print(
-            #         RandK_indices.nelement(),
-            #         received_coordinates.unique().nelement(),
-            #         nonreceived_coordinates.unique().nelement(),
-            #     )
-            #     raise ValueError
+            # nonreceived_coordinates = torch.tensor(
+            #     np.setdiff1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy())
+            # )
+            #
+            # delay_received_coordinates = torch.tensor(
+            #     np.setdiff1d(aggregated_RandK_indices.unique().cpu().numpy(), RandK_indices.unique().cpu().numpy())
+            # )
 
         with self._timer("reduce.setgrad", verbosity=2):
+            flat_grad.buffer.zero_()
             flat_grad.buffer[aggregated_RandK_indices.long()] = aggregated_RandK_grad
 
             for out in grad_out:
