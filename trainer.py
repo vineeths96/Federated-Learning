@@ -4,10 +4,13 @@ import argparse
 import torch
 import torch.optim as optim
 
-from model_dispatcher import CIFAR
+from model_dispatcher import CIFAR, MNIST
 from reducer import (
     NoneAllReducer,
     GlobalRandKReducer,
+    GlobalRandKMemoryReducer,
+    GlobalTopKReducer,
+    GlobalTopKMemoryReducer,
 )
 from timer import Timer
 from logger import Logger
@@ -17,22 +20,23 @@ from seed import set_seed
 
 config = dict(
     num_epochs=25,
-    batch_size=128,
+    batch_size=512,
     # communication="TCP",
     # communication="UDP",
     communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
+    architecture="CNN",
     # architecture="ResNet18",
     # architecture="ResNet50",
     # architecture="VGG16",
-    architecture="MobileNet",
+    # architecture="MobileNet",
     # architecture="MobileNetV2",
-    gradient_size={"ResNet18": 11173962, "ResNet50": 23520842, "VGG16": 14728266, "MobileNet": 3217226, "MobileNetV2": 2296922},
+    gradient_size={"CNN": 582026,"ResNet18": 11173962, "ResNet50": 23520842, "VGG16": 14728266, "MobileNet": 3217226, "MobileNetV2": 2296922},
     local_steps=1,
-    chunk=7500,
+    chunk=5000,
     delay=0,
-    K=150000,
+    K=20000,
     # compression=1/1000,
     # quantization_level=6,
     # higher_quantization_level=10,
@@ -42,7 +46,7 @@ config = dict(
     reducer="GlobalRandKReducer",
     seed=42,
     log_verbosity=2,
-    lr=0.1,
+    lr=0.01,
 )
 
 
@@ -139,7 +143,8 @@ def train(local_rank, world_size):
     best_accuracy = {"top1": 0, "top5": 0}
 
     global_iteration_count = 0
-    model = CIFAR(device, timer, config)
+    # model = CIFAR(device, timer, config)
+    model = MNIST(device, timer, config)
 
     send_buffers = [torch.zeros_like(param) for param in model.parameters]
 
