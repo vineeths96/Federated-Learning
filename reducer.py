@@ -186,6 +186,7 @@ class GlobalRandKReducer(Reducer):
             set_seed(self._config["seed"])
             self._indices_queue = torch.randperm(len(flat_grad.buffer)).split(self._K)
             self._indices_queue = list(self._indices_queue)
+            self._indices_queue.pop()
 
         RandK_indices = self._indices_queue.pop().long()
         RandK_flat_grad = flat_grad.buffer[RandK_indices]
@@ -298,6 +299,7 @@ class GlobalRandKMemoryReducer(Reducer):
             set_seed(self._config["seed"])
             self._indices_queue = torch.randperm(len(flat_grad.buffer)).split(self._K)
             self._indices_queue = list(self._indices_queue)
+            self._indices_queue.pop()
 
         RandK_indices = self._indices_queue.pop().long()
         RandK_flat_grad = flat_grad.buffer[RandK_indices]

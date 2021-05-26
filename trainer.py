@@ -21,9 +21,9 @@ from seed import set_seed
 config = dict(
     num_epochs=10,
     batch_size=512,
-    # communication="TCP",
+    communication="TCP",
     # communication="UDP",
-    communication="TCPUDP",
+    # communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
     architecture="CNN",
@@ -36,14 +36,14 @@ config = dict(
     local_steps=1,
     chunk=5000,
     delay=0,
-    K=20000,
+    # K=20000,
     # compression=1/1000,
     # quantization_level=6,
     # higher_quantization_level=10,
     # quantization_levels=[6, 10, 16],
     # rank=1,
-    # reducer="NoneAllReducer",
-    reducer="GlobalRandKReducer",
+    reducer="NoneAllReducer",
+    # reducer="GlobalTopKMemoryReducer",
     seed=42,
     log_verbosity=2,
     lr=0.01,
@@ -188,36 +188,32 @@ def train(local_rank, world_size):
 
         with timer("epoch_metrics.collect", epoch, verbosity=2):
             # epoch_metrics.reduce()
-            if local_rank == 0:
-                for key, value in epoch_metrics.values().items():
-                    logger.log_info(
-                        key,
-                        {"value": value, "epoch": epoch, "bits": bits_communicated},
-                        tags={"split": "train"},
-                    )
+            for key, value in epoch_metrics.values().items():
+                logger.log_info(
+                    key,
+                    {"value": value, "epoch": epoch, "bits": bits_communicated},
+                    tags={"split": "train"},
+                )
 
         with timer("test.last", epoch):
             test_stats = model.test()
-            if local_rank == 0:
-                for key, value in test_stats.values().items():
-                    logger.log_info(
-                        key,
-                        {"value": value, "epoch": epoch, "bits": bits_communicated},
-                        tags={"split": "test"},
-                    )
+            for key, value in test_stats.values().items():
+                logger.log_info(
+                    key,
+                    {"value": value, "epoch": epoch, "bits": bits_communicated},
+                    tags={"split": "test"},
+                )
 
-                    if "top1_accuracy" == key and value > best_accuracy["top1"]:
-                        best_accuracy["top1"] = value
-                        logger.save_model(model)
+                if "top1_accuracy" == key and value > best_accuracy["top1"]:
+                    best_accuracy["top1"] = value
+                    logger.save_model(model)
 
-                    if "top5_accuracy" == key and value > best_accuracy["top5"]:
-                        best_accuracy["top5"] = value
+                if "top5_accuracy" == key and value > best_accuracy["top5"]:
+                    best_accuracy["top5"] = value
 
-        if local_rank == 0:
-            logger.epoch_update(epoch, epoch_metrics, test_stats)
+        logger.epoch_update(epoch, epoch_metrics, test_stats)
 
-    if local_rank == 0:
-        print(timer.summary())
+    print(timer.summary())
 
     logger.summary_writer(timer, best_accuracy, bits_communicated)
 

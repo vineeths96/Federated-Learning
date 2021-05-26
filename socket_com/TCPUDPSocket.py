@@ -506,6 +506,7 @@ class TCPUDPKServer:
                         set_seed(self.SEED)
                         self._indices_queue = torch.randperm(self.GRADIENT_SIZE).split(self.K)
                         self._indices_queue = list(self._indices_queue)
+                        self._indices_queue.pop()
 
                     RandK_indices = self._indices_queue.pop().long()
                     RandK_flat_grad = self.accumulated_gradient[RandK_indices]

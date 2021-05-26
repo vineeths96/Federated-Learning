@@ -11,9 +11,9 @@ from socket_com.TCPUDPSocket import TCPUDPServer, TCPUDPKServer, TCPUDPTopKServe
 config = dict(
     num_epochs=10,
     batch_size=512,
-    # communication="TCP",
+    communication="TCP",
     # communication="UDP",
-    communication="TCPUDP",
+    # communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
     architecture="CNN",
@@ -24,16 +24,16 @@ config = dict(
     # architecture="MobileNetV2",
     gradient_size={"CNN": 582026,"ResNet18": 11173962, "ResNet50": 23520842, "VGG16": 14728266, "MobileNet": 3217226, "MobileNetV2": 2296922},
     local_steps=1,
-    chunk=5000,
-    delay=0,
-    K=20000,
+    chunk=2000,
+    delay=50e-3,
+    # K=20000,
     # compression=1/1000,
     # quantization_level=6,
     # higher_quantization_level=10,
     # quantization_levels=[6, 10, 16],
     # rank=1,
-    # reducer="NoneAllReducer",
-    reducer="GlobalRandKReducer",
+    reducer="NoneAllReducer",
+    # reducer="GlobalTopKMemoryReducer",
     seed=42,
     log_verbosity=2,
     lr=0.01,
@@ -74,7 +74,7 @@ def start_server(world_size):
             )
         else:
             raise NotImplementedError("Communication method not implemented.")
-    elif config["reducer"] == "GlobalRandKReducer":
+    elif config["reducer"] == "GlobalRandKReducer" or config["reducer"] == "GlobalRandKMemoryReducer":
         if config["communication"] == "TCP":
             server = TCPKServer(
                 SERVER=config["server_address"],
@@ -108,7 +108,7 @@ def start_server(world_size):
             )
         else:
             raise NotImplementedError("Communication method not implemented.")
-    elif config["reducer"] == "GlobalTopKReducer":
+    elif config["reducer"] == "GlobalTopKReducer" or config["reducer"] == "GlobalTopKMemoryReducer":
         # if config["communication"] == "TCP":
         #     server = TCPKServer(
         #         SERVER=config["server_address"],
