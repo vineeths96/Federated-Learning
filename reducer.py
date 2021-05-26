@@ -442,8 +442,8 @@ class GlobalTopKReducer(Reducer):
             else:
                 raise NotImplementedError("Communication method not implemented.")
 
-            TopK_indices_grad = torch.vstack([TopK_indices, TopK_flat_grad.cpu()]).T
-            # print(TopK_indices)
+            TopK_indices_grad = torch.vstack([TopK_indices, TopK_flat_grad]).cpu().T
+            # print(TopK_indices_grad)
 
             client.send(TopK_indices_grad.clone())
             # print("Local Grad", TopK_indices_grad)
@@ -548,7 +548,7 @@ class GlobalTopKMemoryReducer(Reducer):
             else:
                 raise NotImplementedError("Communication method not implemented.")
 
-            TopK_indices_grad = torch.vstack([TopK_indices, TopK_flat_grad.cpu()]).T
+            TopK_indices_grad = torch.vstack([TopK_indices, TopK_flat_grad]).cpu().T
             # print(TopK_indices)
 
             client.send(TopK_indices_grad.clone())

@@ -19,7 +19,7 @@ from seed import set_seed
 
 
 config = dict(
-    num_epochs=25,
+    num_epochs=10,
     batch_size=512,
     # communication="TCP",
     # communication="UDP",
@@ -43,7 +43,7 @@ config = dict(
     # quantization_levels=[6, 10, 16],
     # rank=1,
     # reducer="NoneAllReducer",
-    reducer="GlobalRandKMemoryReducer",
+    reducer="GlobalTopKReducer",
     seed=42,
     log_verbosity=2,
     lr=0.01,
