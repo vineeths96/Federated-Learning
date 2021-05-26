@@ -29,13 +29,14 @@ def mark_inset(parent_axes, inset_axes, loc1a=1, loc1b=1, loc2a=2, loc2b=2, **kw
 
 
 def plot_loss_curves(log_path):
-    models = ["ResNet50", "VGG16"]
+    # models = ["ResNet50", "VGG16"]
+    models = ["CNN"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
         fig, axes_main = plt.subplots(figsize=[10, 7])
-        axes_inner = plt.axes([0.25, 0.6, 0.3, 0.3])
-        axes_inner_range = list(range(40, 80))
+        # axes_inner = plt.axes([0.25, 0.6, 0.3, 0.3])
+        # axes_inner_range = list(range(40, 80))
 
         experiment_group.sort()
 
@@ -73,19 +74,19 @@ def plot_loss_curves(log_path):
             loss = log_dict[()].get("test_loss")
             axes_main.plot(loss, label=label)
 
-            axes_inner.plot(axes_inner_range, loss[axes_inner_range])
+            # axes_inner.plot(axes_inner_range, loss[axes_inner_range])
 
-        axes_inner.grid()
-        mark_inset(
-            axes_main,
-            axes_inner,
-            loc1a=4,
-            loc1b=1,
-            loc2a=3,
-            loc2b=2,
-            fc="none",
-            ec="0.5",
-        )
+        # axes_inner.grid()
+        # mark_inset(
+        #     axes_main,
+        #     axes_inner,
+        #     loc1a=4,
+        #     loc1b=1,
+        #     loc2a=3,
+        #     loc2b=2,
+        #     fc="none",
+        #     ec="0.5",
+        # )
 
         # axes_main.grid()
         axes_main.set_xlabel("Epochs")
@@ -99,13 +100,14 @@ def plot_loss_curves(log_path):
 
 
 def plot_loss_time_curves(log_path):
-    models = ["ResNet50", "VGG16"]
+    # models = ["ResNet50", "VGG16"]
+    models = ["CNN"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
         fig, axes_main = plt.subplots(figsize=[10, 7])
-        axes_inner = plt.axes([0.25, 0.6, 0.3, 0.3])
-        axes_inner_range = list(range(40, 80))
+        # axes_inner = plt.axes([0.25, 0.6, 0.3, 0.3])
+        # axes_inner_range = list(range(40, 80))
 
         experiment_group.sort()
 
@@ -144,19 +146,19 @@ def plot_loss_time_curves(log_path):
             time = log_dict[()].get("time")
             axes_main.plot(time, loss, label=label)
 
-            axes_inner.plot(time[axes_inner_range], loss[axes_inner_range])
+            # axes_inner.plot(time[axes_inner_range], loss[axes_inner_range])
 
-        axes_inner.grid()
-        mark_inset(
-            axes_main,
-            axes_inner,
-            loc1a=4,
-            loc1b=1,
-            loc2a=3,
-            loc2b=2,
-            fc="none",
-            ec="0.5",
-        )
+        # axes_inner.grid()
+        # mark_inset(
+        #     axes_main,
+        #     axes_inner,
+        #     loc1a=4,
+        #     loc1b=1,
+        #     loc2a=3,
+        #     loc2b=2,
+        #     fc="none",
+        #     ec="0.5",
+        # )
 
         # axes_main.grid()
         axes_main.set_xlabel("TIme")
@@ -170,13 +172,14 @@ def plot_loss_time_curves(log_path):
 
 
 def plot_top1_accuracy_curves(log_path):
-    models = ["ResNet50", "VGG16"]
+    # models = ["ResNet50", "VGG16"]
+    models = ["CNN"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
         fig, axes_main = plt.subplots(figsize=[10, 7])
-        axes_inner = plt.axes([0.25, 0.15, 0.3, 0.3])
-        axes_inner_range = list(range(30, 60))
+        # axes_inner = plt.axes([0.25, 0.15, 0.3, 0.3])
+        # axes_inner_range = list(range(30, 60))
 
         experiment_group.sort()
 
@@ -214,19 +217,19 @@ def plot_top1_accuracy_curves(log_path):
             top1_accuracy = log_dict[()].get("test_top1_accuracy")
             axes_main.plot(top1_accuracy, label=label)
 
-            axes_inner.plot(axes_inner_range, top1_accuracy[axes_inner_range])
+            # axes_inner.plot(axes_inner_range, top1_accuracy[axes_inner_range])
 
-        axes_inner.grid()
-        mark_inset(
-            axes_main,
-            axes_inner,
-            loc1a=1,
-            loc1b=4,
-            loc2a=2,
-            loc2b=3,
-            fc="none",
-            ec="0.5",
-        )
+        # axes_inner.grid()
+        # mark_inset(
+        #     axes_main,
+        #     axes_inner,
+        #     loc1a=1,
+        #     loc1b=4,
+        #     loc2a=2,
+        #     loc2b=3,
+        #     fc="none",
+        #     ec="0.5",
+        # )
 
         # axes_main.grid()
         axes_main.set_xlabel("Epochs")
@@ -240,13 +243,14 @@ def plot_top1_accuracy_curves(log_path):
 
 
 def plot_top5_accuracy_curves(log_path):
-    models = ["ResNet50", "VGG16"]
+    # models = ["ResNet50", "VGG16"]
+    models = ["CNN"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
         fig, axes_main = plt.subplots(figsize=[10, 7])
-        axes_inner = plt.axes([0.25, 0.15, 0.3, 0.3])
-        axes_inner_range = list(range(5, 25))
+        # axes_inner = plt.axes([0.25, 0.15, 0.3, 0.3])
+        # axes_inner_range = list(range(5, 25))
 
         experiment_group.sort()
 
@@ -284,19 +288,19 @@ def plot_top5_accuracy_curves(log_path):
             top5_accuracy = log_dict[()].get("test_top5_accuracy")
             axes_main.plot(top5_accuracy, label=label)
 
-            axes_inner.plot(axes_inner_range, top5_accuracy[axes_inner_range])
+            # axes_inner.plot(axes_inner_range, top5_accuracy[axes_inner_range])
 
-        axes_inner.grid()
-        mark_inset(
-            axes_main,
-            axes_inner,
-            loc1a=1,
-            loc1b=4,
-            loc2a=2,
-            loc2b=3,
-            fc="none",
-            ec="0.5",
-        )
+        # axes_inner.grid()
+        # mark_inset(
+        #     axes_main,
+        #     axes_inner,
+        #     loc1a=1,
+        #     loc1b=4,
+        #     loc2a=2,
+        #     loc2b=3,
+        #     fc="none",
+        #     ec="0.5",
+        # )
 
         # axes_main.grid()
         axes_main.set_xlabel("Epochs")
@@ -310,13 +314,14 @@ def plot_top5_accuracy_curves(log_path):
 
 
 def plot_top1_accuracy_time_curves(log_path):
-    models = ["ResNet50", "VGG16"]
+    # models = ["ResNet50", "VGG16"]
+    models = ["CNN"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
         fig, axes_main = plt.subplots(figsize=[10, 7])
-        axes_inner = plt.axes([0.25, 0.15, 0.3, 0.3])
-        axes_inner_range = list(range(30, 60))
+        # axes_inner = plt.axes([0.25, 0.15, 0.3, 0.3])
+        # axes_inner_range = list(range(30, 60))
 
         experiment_group.sort()
 
@@ -355,19 +360,19 @@ def plot_top1_accuracy_time_curves(log_path):
             time = log_dict[()].get("time")
             axes_main.plot(time, top1_accuracy, label=label)
 
-            axes_inner.plot(time[axes_inner_range], top1_accuracy[axes_inner_range])
+            # axes_inner.plot(time[axes_inner_range], top1_accuracy[axes_inner_range])
 
-        axes_inner.grid()
-        mark_inset(
-            axes_main,
-            axes_inner,
-            loc1a=1,
-            loc1b=4,
-            loc2a=2,
-            loc2b=3,
-            fc="none",
-            ec="0.5",
-        )
+        # axes_inner.grid()
+        # mark_inset(
+        #     axes_main,
+        #     axes_inner,
+        #     loc1a=1,
+        #     loc1b=4,
+        #     loc2a=2,
+        #     loc2b=3,
+        #     fc="none",
+        #     ec="0.5",
+        # )
 
         # axes_main.grid()
         axes_main.set_xlabel("Time")
@@ -1384,8 +1389,8 @@ if __name__ == "__main__":
 
     plot_loss_curves(os.path.join(root_log_path, "convergence"))
     plot_loss_time_curves(os.path.join(root_log_path, "convergence"))
-    # plot_top1_accuracy_curves(os.path.join(root_log_path, "convergence"))
-    # plot_top1_accuracy_time_curves(os.path.join(root_log_path, "convergence"))
+    plot_top1_accuracy_curves(os.path.join(root_log_path, "convergence"))
+    plot_top1_accuracy_time_curves(os.path.join(root_log_path, "convergence"))
     # plot_top5_accuracy_curves(os.path.join(root_log_path, "convergence"))
     # plot_time_per_batch_curves(os.path.join(root_log_path, "convergence"))
     # plot_time_breakdown(os.path.join(root_log_path, "time_breakdown"))
