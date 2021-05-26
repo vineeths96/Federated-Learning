@@ -16,8 +16,7 @@ class Logger:
         self._local_rank = config["local_rank"]
         self._start = datetime.datetime.now()
 
-        if self._local_rank == 0:
-            os.makedirs(self._log_path, exist_ok=True)
+        os.makedirs(self._log_path, exist_ok=True)
 
         metric_list = {
             "train_top1_accuracy",
