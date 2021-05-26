@@ -8,7 +8,7 @@ from socket_com.TCPUDPSocket import TCPUDPServer, TCPUDPKServer
 
 
 config = dict(
-    num_epochs=1,
+    num_epochs=25,
     batch_size=128,
     # communication="TCP",
     # communication="UDP",
@@ -24,14 +24,14 @@ config = dict(
     local_steps=1,
     chunk=7500,
     delay=0,
-    # K=150000,
+    K=150000,
     # compression=1/1000,
     # quantization_level=6,
     # higher_quantization_level=10,
     # quantization_levels=[6, 10, 16],
     # rank=1,
-    reducer="NoneAllReducer",
-    # reducer="GlobalRandKReducer",
+    # reducer="NoneAllReducer",
+    reducer="GlobalRandKReducer",
     seed=42,
     log_verbosity=2,
     lr=0.1,
