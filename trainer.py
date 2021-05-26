@@ -43,7 +43,7 @@ config = dict(
     # quantization_levels=[6, 10, 16],
     # rank=1,
     # reducer="NoneAllReducer",
-    reducer="GlobalRandKReducer",
+    reducer="GlobalRandKMemoryReducer",
     seed=42,
     log_verbosity=2,
     lr=0.01,
@@ -105,7 +105,7 @@ def train(local_rank, world_size):
             K=config["K"],
             quantization_level=config["quantization_level"],
         )
-    elif config["reducer"] in ["TopKReducer", "GlobalTopKReducer", "GlobalRandKReducer"]:
+    elif config["reducer"] in ["TopKReducer", "GlobalTopKReducer", "GlobalRandKReducer", "GlobalTopKMemoryReducer", "GlobalRandKMemoryReducer"]:
         reducer = globals()[config["reducer"]](config, device, timer)
     elif config["reducer"] in ["TopKReducerRatio", "GlobalTopKReducerRatio"]:
         reducer = globals()[config["reducer"]](device, timer, compression=config["compression"])
