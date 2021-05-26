@@ -140,7 +140,7 @@ class NoneAllReducer(Reducer):
                 indices = aggregated_grad_indices[:, 0].long()
                 gradient = aggregated_grad_indices[:, 1]
 
-                received_coordinates_fraction = gradient.nelement() / self._config["gradient_size"][self._config["architecture"]],
+                received_coordinates_fraction = gradient.nelement() / self._config["gradient_size"][self._config["architecture"]]
 
                 aggregated_grad[indices] = 1/ received_coordinates_fraction * gradient
             else:
