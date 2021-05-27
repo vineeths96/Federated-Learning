@@ -20,12 +20,14 @@ from seed import set_seed
 
 config = dict(
     num_epochs=10,
-    batch_size=128,
-    # communication="TCP",
+    batch_size=64,
+    communication="TCP",
     # communication="UDP",
-    communication="TCPUDP",
+    # communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
+    dataset="CIFAR",
+    # dataset="MNIST",
     # architecture="CNN",
     # architecture="ResNet18",
     # architecture="ResNet50",
@@ -42,8 +44,8 @@ config = dict(
     # higher_quantization_level=10,
     # quantization_levels=[6, 10, 16],
     # rank=1,
-    # reducer="NoneAllReducer",
-    reducer="GlobalTopKMemoryReducer",
+    reducer="NoneAllReducer",
+    # reducer="GlobalTopKMemoryReducer",
     seed=42,
     log_verbosity=2,
     lr=0.1,
@@ -143,8 +145,13 @@ def train(local_rank, world_size):
     best_accuracy = {"top1": 0, "top5": 0}
 
     global_iteration_count = 0
-    model = CIFAR(device, timer, config)
-    # model = MNIST(device, timer, config)
+
+    if config["dataset"] == "CIFAR":
+        model = CIFAR(device, timer, config)
+    elif config["dataset"] == "MNIST":
+        model = MNIST(device, timer, config)
+    else:
+        raise NotImplementedError("Dataset is not implemented")
 
     send_buffers = [torch.zeros_like(param) for param in model.parameters]
 
