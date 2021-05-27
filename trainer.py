@@ -21,20 +21,20 @@ from seed import set_seed
 config = dict(
     num_epochs=10,
     batch_size=512,
-    communication="TCP",
+    # communication="TCP",
     # communication="UDP",
-    # communication="TCPUDP",
+    communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
-    architecture="CNN",
+    # architecture="CNN",
     # architecture="ResNet18",
     # architecture="ResNet50",
     # architecture="VGG16",
-    # architecture="MobileNet",
+    architecture="MobileNet",
     # architecture="MobileNetV2",
     gradient_size={"CNN": 582026,"ResNet18": 11173962, "ResNet50": 23520842, "VGG16": 14728266, "MobileNet": 3217226, "MobileNetV2": 2296922},
     local_steps=1,
-    chunk=5000,
+    chunk=7500,
     delay=0,
     # K=20000,
     # compression=1/1000,
@@ -42,8 +42,8 @@ config = dict(
     # higher_quantization_level=10,
     # quantization_levels=[6, 10, 16],
     # rank=1,
-    reducer="NoneAllReducer",
-    # reducer="GlobalTopKMemoryReducer",
+    # reducer="NoneAllReducer",
+    reducer="GlobalTopKMemoryReducer",
     seed=42,
     log_verbosity=2,
     lr=0.01,
@@ -143,8 +143,8 @@ def train(local_rank, world_size):
     best_accuracy = {"top1": 0, "top5": 0}
 
     global_iteration_count = 0
-    # model = CIFAR(device, timer, config)
-    model = MNIST(device, timer, config)
+    model = CIFAR(device, timer, config)
+    # model = MNIST(device, timer, config)
 
     send_buffers = [torch.zeros_like(param) for param in model.parameters]
 
