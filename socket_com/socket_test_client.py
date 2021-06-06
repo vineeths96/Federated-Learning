@@ -21,11 +21,9 @@ if use_TCPUDP:
     for msg in MSG_SIZES:
         time_sum = 0
         for i in range(REPS):
-            client = TCPUDPClient(SERVER=SERVER, TIMEOUT=TIMEOUT, DELAY=DELAY, CHUNK=CHUNK, LOCAL_RANK=local_rank)
+            client = TCPUDPClient(SERVER=SERVER, TIMEOUT=TIMEOUT, DELAY=DELAY, CHUNK=CHUNK, LOCAL_RANK=local_rank, GRADIENT_SIZE=MSG_SIZE)
 
-            message = torch.cat([torch.arange(msg).unsqueeze(1), 1 * torch.arange(msg).unsqueeze(1)], dim=-1).to(
-                torch.float32
-            )
+            message = torch.arange(msg).to(torch.float32)
 
             start = time.time()
             client.sendTCP_SOT()

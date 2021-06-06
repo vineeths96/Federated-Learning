@@ -9,7 +9,7 @@ if use_TCPUDP:
         SERVER=SERVER,
         NUM_CLIENTS=NUM_CLIENTS,
         TIMEOUT=TIMEOUT,
-        GRADIENT_SIZE=14728266,
+        GRADIENT_SIZE=MSG_SIZE,
         CHUNK=CHUNK,
         DELAY=DELAY,
     )
@@ -20,7 +20,7 @@ else:
         SERVER=SERVER,
         NUM_CLIENTS=NUM_CLIENTS,
         TIMEOUT=TIMEOUT,
-        GRADIENT_SIZE=14728266,
+        GRADIENT_SIZE=MSG_SIZE,
         CHUNK=CHUNK,
         DELAY=DELAY,
     )
