@@ -106,9 +106,7 @@ class NoneAllReducer(Reducer):
                     SEED=self._config["seed"],
                 )
 
-                client_grad = torch.vstack(
-                    [torch.arange(self._config["gradient_size"][self._config["architecture"]]), flat_grad.buffer.cpu()]
-                ).T
+                client_grad = flat_grad.buffer.cpu()
             elif self._config["communication"] == "TCPUDP":
                 client = TCPUDPClient(
                     SERVER=self._config["server_address"],
@@ -120,9 +118,7 @@ class NoneAllReducer(Reducer):
                     LOCAL_RANK=self._config["local_rank"],
                 )
 
-                client_grad = torch.vstack(
-                    [torch.arange(self._config["gradient_size"][self._config["architecture"]]), flat_grad.buffer.cpu()]
-                ).T
+                client_grad = flat_grad.buffer.cpu()
             else:
                 raise NotImplementedError("Communication method not implemented.")
 
@@ -132,17 +128,7 @@ class NoneAllReducer(Reducer):
             if self._config["communication"] == "TCP":
                 aggregated_grad = client.receive().to(self._device)
             elif self._config["communication"] == "UDP" or self._config["communication"] == "TCPUDP":
-                aggregated_grad_indices = client.receive().to(self._device)
-                aggregated_grad = torch.zeros(
-                    self._config["gradient_size"][self._config["architecture"]], device=self._device
-                )
-
-                indices = aggregated_grad_indices[:, 0].long()
-                gradient = aggregated_grad_indices[:, 1]
-
-                received_coordinates_fraction = gradient.nelement() / self._config["gradient_size"][self._config["architecture"]]
-
-                aggregated_grad[indices] = 1/ received_coordinates_fraction * gradient
+                aggregated_grad = client.receive().to(self._device)
             else:
                 raise NotImplementedError("Communication method not implemented.")
 
