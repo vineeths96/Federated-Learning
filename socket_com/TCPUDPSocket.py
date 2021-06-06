@@ -88,8 +88,9 @@ class TCPUDPServer:
     def sendUDP(self, tensor, addr, local_rank):
         messages = tensor.split(self.CHUNK)
 
-        for message in messages:
-            encoded_message = self.encode(message.clone())
+        for ind, message in enumerate(messages):
+            indexed_message = torch.cat([torch.tensor([ind * self.CHUNK]), message])
+            encoded_message = self.encode(indexed_message.clone())
             self.serverUDP[local_rank].sendto(encoded_message, addr)
 
             time.sleep(self.DELAY)
@@ -133,7 +134,10 @@ class TCPUDPServer:
                     except:
                         continue
 
-                    buffer.append(decoded_msg)
+                    start_index = decoded_msg[0].item()
+                    indices = torch.arange(start_index, start_index + len(decoded_msg) - 1)
+                    indices_grad = torch.vstack([indices, decoded_msg[1:]]).T
+                    buffer.append(indices_grad)
 
         # TODO Handle buffer [] case
         if len(buffer) > 1:
@@ -180,13 +184,9 @@ class TCPUDPServer:
                     self.DEVICES.sort(key=lambda device: device[0])
                     clients.sort(key=lambda client: client.getpeername())
 
-                    accumulated_grad_indices = torch.vstack(
-                        [torch.arange(self.GRADIENT_SIZE), self.accumulated_gradient]
-                    ).T
-
                     for client, (device, local_rank) in zip(clients, self.DEVICES):
                         sending_thread = threading.Thread(
-                            target=self.send, args=(accumulated_grad_indices, client, device, local_rank)
+                            target=self.send, args=(self.accumulated_gradient, client, device, local_rank)
                         )
                         sending_threads.append(sending_thread)
                         sending_thread.start()
@@ -279,8 +279,9 @@ class TCPUDPClient:
     def sendUDP(self, tensor):
         messages = tensor.split(self.CHUNK)
 
-        for message in messages:
-            encoded_message = self.encode(message.clone())
+        for ind, message in enumerate(messages):
+            indexed_message = torch.cat([torch.tensor([ind * self.CHUNK]), message])
+            encoded_message = self.encode(indexed_message.clone())
             self.clientUDP.sendto(encoded_message, self.UDP_ADDR)
 
             time.sleep(self.DELAY)
@@ -317,7 +318,10 @@ class TCPUDPClient:
                     except:
                         continue
 
-                    buffer.append(decoded_msg)
+                    start_index = decoded_msg[0].item()
+                    indices = torch.arange(start_index, start_index + len(decoded_msg) - 1)
+                    indices_grad = torch.vstack([indices, decoded_msg[1:]]).T
+                    buffer.append(indices_grad)
 
         # TODO Handle buffer [] case
         if len(buffer) > 1:
