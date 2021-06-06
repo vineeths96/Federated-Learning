@@ -146,11 +146,12 @@ class TCPUDPServer:
             msg = buffer[0]
 
         print(f"[{addr}] {msg}")
-        print(f"Length of message received: {msg.shape[0]}")
+        # print(f"Length of message received: {msg.shape[0]}")
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
         received_coordinates_fraction = gradient.nelement() / self.GRADIENT_SIZE
+        print("Fraction of message received", received_coordinates_fraction)
 
         self.accumulated_gradient[indices] += 1/ received_coordinates_fraction * gradient
 
@@ -337,6 +338,7 @@ class TCPUDPClient:
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
         received_coordinates_fraction = gradient.nelement() / self.GRADIENT_SIZE
+        print("Fraction of message received", received_coordinates_fraction)
 
         aggregated_grad[indices] = 1 / received_coordinates_fraction * gradient
 
