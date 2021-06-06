@@ -9,7 +9,7 @@ from socket_com.TCPUDPSocket import TCPUDPServer, TCPUDPKServer, TCPUDPTopKServe
 
 
 config = dict(
-    num_epochs=10,
+    num_epochs=1,
     batch_size=64,
     # communication="TCP",
     # communication="UDP",
@@ -26,7 +26,7 @@ config = dict(
     architecture="MobileNetV2",
     gradient_size={"CNN": 582026,"ResNet18": 11173962, "ResNet50": 23520842, "VGG16": 14728266, "MobileNet": 3217226, "MobileNetV2": 2296922},
     local_steps=1,
-    chunk=7500,
+    chunk=15000,
     delay=0,
     # K=10000,
     # compression=1/1000,
@@ -36,6 +36,7 @@ config = dict(
     # rank=1,
     reducer="NoneAllReducer",
     # reducer="GlobalRandKReducer",
+    # reducer="GlobalTopKReducer",
     seed=42,
     log_verbosity=2,
     lr=0.1,
