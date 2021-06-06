@@ -135,9 +135,9 @@ class TCPUDPServer:
                         continue
 
                     start_index = decoded_msg[0].item()
-                    indices = torch.arange(start_index, start_index + len(decoded_msg) - 1)
-                    indices_grad = torch.vstack([indices, decoded_msg[1:]]).T
-                    buffer.append(indices_grad)
+                    start_index_indices = torch.arange(start_index, start_index + len(decoded_msg) - 1)
+                    start_index_indices_grad = torch.vstack([start_index_indices, decoded_msg[1:]]).T
+                    buffer.append(start_index_indices_grad)
 
         # TODO Handle buffer [] case
         if len(buffer) > 1:
@@ -319,9 +319,9 @@ class TCPUDPClient:
                         continue
 
                     start_index = decoded_msg[0].item()
-                    indices = torch.arange(start_index, start_index + len(decoded_msg) - 1)
-                    indices_grad = torch.vstack([indices, decoded_msg[1:]]).T
-                    buffer.append(indices_grad)
+                    start_index_indices = torch.arange(start_index, start_index + len(decoded_msg) - 1)
+                    start_index_indices_grad = torch.vstack([start_index_indices, decoded_msg[1:]]).T
+                    buffer.append(start_index_indices_grad)
 
         # TODO Handle buffer [] case
         if len(buffer) > 1:
@@ -332,7 +332,15 @@ class TCPUDPClient:
         # print(f"[{addr}] {msg}")
         # print(f"Length of message received: {msg.shape[0]}")
 
-        return msg
+        aggregated_grad = torch.zeros(self.GRADIENT_SIZE)
+
+        indices = msg[:, 0].long()
+        gradient = msg[:, 1]
+        received_coordinates_fraction = gradient.nelement() / self.GRADIENT_SIZE
+
+        aggregated_grad[indices] = 1 / received_coordinates_fraction * gradient
+
+        return aggregated_grad
 
 
 class TCPUDPKServer:
