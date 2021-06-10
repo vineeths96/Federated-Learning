@@ -11,9 +11,9 @@ from socket_com.TCPUDPSocket import TCPUDPServer, TCPUDPKServer, TCPUDPTopKServe
 config = dict(
     num_epochs=1,
     batch_size=64,
-    # communication="TCP",
+    communication="TCP",
     # communication="UDP",
-    communication="TCPUDP",
+    # communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
     dataset="CIFAR",
