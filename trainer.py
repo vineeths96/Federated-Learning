@@ -28,6 +28,8 @@ config = dict(
     timeout=1,
     dataset="CIFAR",
     # dataset="MNIST",
+    algorithm="local_sgd",
+    # algorithm="distributed_learning",
     # architecture="CNN",
     # architecture="ResNet18",
     # architecture="ResNet50",
@@ -179,15 +181,28 @@ def train(local_rank, world_size):
 
             with timer("batch", epoch_frac):
                 _, grads, metrics = model.batch_loss_with_gradients(batch)
+                params = model.parameters
                 epoch_metrics.add(metrics)
 
                 if global_iteration_count % config["local_steps"] == 0:
                     with timer("batch.accumulate", epoch_frac, verbosity=2):
-                        for grad, send_buffer in zip(grads, send_buffers):
-                            send_buffer[:] = grad
+                        if config["algorithm"] == "local_sgd":
+                            with timer("batch.step", epoch_frac, verbosity=2):
+                                optimizer.step()
+                                optimizer.zero_grad()
 
-                    with timer("batch.reduce", epoch_frac):
-                        bits_communicated += reducer.reduce(send_buffers, grads)
+                            for param, send_buffer in zip(params, send_buffers):
+                                send_buffer[:] = param
+
+                            with timer("batch.reduce", epoch_frac):
+                                bits_communicated += reducer.reduce(send_buffers, params)
+
+                        elif config["algorithm"] == "distributed_learning":
+                            for grad, send_buffer in zip(grads, send_buffers):
+                                send_buffer[:] = grad
+
+                            with timer("batch.reduce", epoch_frac):
+                                bits_communicated += reducer.reduce(send_buffers, grads)
 
                 with timer("batch.step", epoch_frac, verbosity=2):
                     optimizer.step()

@@ -123,7 +123,7 @@ class NoneAllReducer(Reducer):
                 raise NotImplementedError("Communication method not implemented.")
 
             client.send(client_grad.clone())
-            # print("Local Grad", client_grad)
+            print("Local Grad", client_grad)
 
             if self._config["communication"] == "TCP":
                 aggregated_grad = client.receive().to(self._device)
@@ -132,16 +132,17 @@ class NoneAllReducer(Reducer):
             else:
                 raise NotImplementedError("Communication method not implemented.")
 
-            # print("Aggregated Grad", aggregated_grad)
+            print("Aggregated Grad", aggregated_grad)
             flat_grad.buffer[:] = aggregated_grad
 
-            for out in grad_out:
-                out[:] = 0.0
+            with torch.no_grad():
+                for out in grad_out:
+                    out[:] = 0.0
 
-            for grad, out in zip(flat_grad, grad_out):
-                # TODO Average or Sum
-                grad = grad.to(self._device)
-                out.add_(other=grad)
+                for grad, out in zip(flat_grad, grad_out):
+                    # TODO Average or Sum
+                    grad = grad.to(self._device)
+                    out.add_(other=grad)
 
             bits_communicated += self.n_bits(flat_grad.buffer)
 
