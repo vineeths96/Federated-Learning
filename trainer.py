@@ -185,28 +185,31 @@ def train(local_rank, world_size):
                 epoch_metrics.add(metrics)
 
                 if global_iteration_count % config["local_steps"] == 0:
-                        if config["algorithm"] == "local_sgd":
-                            with timer("batch.step", epoch_frac, verbosity=2):
-                                optimizer.step()
-                                optimizer.zero_grad()
+                    if config["algorithm"] == "local_sgd":
+                        with timer("batch.step", epoch_frac, verbosity=2):
+                            optimizer.step()
+                            optimizer.zero_grad()
 
-                            with timer("batch.accumulate", epoch_frac, verbosity=2):
-                                for param, send_buffer in zip(params, send_buffers):
-                                    send_buffer[:] = param
+                        with timer("batch.accumulate", epoch_frac, verbosity=2):
+                            for param, send_buffer in zip(params, send_buffers):
+                                send_buffer[:] = param
 
-                            with timer("batch.reduce", epoch_frac):
-                                bits_communicated += reducer.reduce(send_buffers, params)
+                        with timer("batch.reduce", epoch_frac):
+                            bits_communicated += reducer.reduce(send_buffers, params)
 
-                        elif config["algorithm"] == "distributed_learning":
-                            with timer("batch.accumulate", epoch_frac, verbosity=2):
-                                for grad, send_buffer in zip(grads, send_buffers):
-                                    send_buffer[:] = grad
+                    elif config["algorithm"] == "distributed_learning":
+                        with timer("batch.accumulate", epoch_frac, verbosity=2):
+                            for grad, send_buffer in zip(grads, send_buffers):
+                                send_buffer[:] = grad
 
-                            with timer("batch.reduce", epoch_frac):
-                                bits_communicated += reducer.reduce(send_buffers, grads)
+                        with timer("batch.reduce", epoch_frac):
+                            bits_communicated += reducer.reduce(send_buffers, grads)
 
-                with timer("batch.step", epoch_frac, verbosity=2):
-                    optimizer.step()
+                        with timer("batch.step", epoch_frac, verbosity=2):
+                            optimizer.step()
+                else:
+                    with timer("batch.step", epoch_frac, verbosity=2):
+                        optimizer.step()
 
         scheduler.step()
 
