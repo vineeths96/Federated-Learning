@@ -20,7 +20,7 @@ from seed import set_seed
 
 config = dict(
     num_epochs=1,
-    batch_size=64,
+    batch_size=128,
     communication="TCP",
     # communication="UDP",
     # communication="TCPUDP",
@@ -37,7 +37,7 @@ config = dict(
     # architecture="MobileNet",
     # architecture="MobileNetV2",
     gradient_size={"CNN": 582026,"ResNet18": 11173962, "ResNet50": 23520842, "VGG16": 14728266, "MobileNet": 3217226, "MobileNetV2": 2296922},
-    local_steps=1,
+    local_steps=100,
     chunk=15000,
     delay=0,
     # K=10000,
