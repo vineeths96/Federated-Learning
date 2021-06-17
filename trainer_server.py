@@ -9,7 +9,7 @@ from socket_com.TCPUDPSocket import TCPUDPServer, TCPUDPKServer, TCPUDPTopKServe
 
 
 config = dict(
-    num_epochs=1,
+    num_epochs=100,
     batch_size=128,
     communication="TCP",
     # communication="UDP",
