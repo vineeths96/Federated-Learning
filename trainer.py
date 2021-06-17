@@ -21,9 +21,9 @@ from seed import set_seed
 config = dict(
     num_epochs=100,
     batch_size=128,
-    communication="TCP",
+    # communication="TCP",
     # communication="UDP",
-    # communication="TCPUDP",
+    communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
     dataset="CIFAR",
