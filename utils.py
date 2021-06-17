@@ -29,8 +29,8 @@ def mark_inset(parent_axes, inset_axes, loc1a=1, loc1b=1, loc2a=2, loc2b=2, **kw
 
 
 def plot_loss_curves(log_path):
-    # models = ["ResNet50", "VGG16"]
-    models = ["CNN"]
+    models = ["ResNet50", "VGG16"]
+    # models = ["CNN"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
@@ -100,8 +100,8 @@ def plot_loss_curves(log_path):
 
 
 def plot_loss_time_curves(log_path):
-    # models = ["ResNet50", "VGG16"]
-    models = ["CNN"]
+    models = ["ResNet50", "VGG16"]
+    # models = ["CNN"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
@@ -172,8 +172,8 @@ def plot_loss_time_curves(log_path):
 
 
 def plot_top1_accuracy_curves(log_path):
-    # models = ["ResNet50", "VGG16"]
-    models = ["CNN"]
+    models = ["ResNet50", "VGG16"]
+    # models = ["CNN"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
@@ -243,8 +243,8 @@ def plot_top1_accuracy_curves(log_path):
 
 
 def plot_top5_accuracy_curves(log_path):
-    # models = ["ResNet50", "VGG16"]
-    models = ["CNN"]
+    models = ["ResNet50", "VGG16"]
+    # models = ["CNN"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
@@ -314,8 +314,8 @@ def plot_top5_accuracy_curves(log_path):
 
 
 def plot_top1_accuracy_time_curves(log_path):
-    # models = ["ResNet50", "VGG16"]
-    models = ["CNN"]
+    models = ["ResNet50", "VGG16"]
+    # models = ["CNN"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
@@ -1391,7 +1391,8 @@ if __name__ == "__main__":
     plot_loss_time_curves(os.path.join(root_log_path, "convergence"))
     plot_top1_accuracy_curves(os.path.join(root_log_path, "convergence"))
     plot_top1_accuracy_time_curves(os.path.join(root_log_path, "convergence"))
-    # plot_top5_accuracy_curves(os.path.join(root_log_path, "convergence"))
+    plot_top5_accuracy_curves(os.path.join(root_log_path, "convergence"))
+
     # plot_time_per_batch_curves(os.path.join(root_log_path, "convergence"))
     # plot_time_breakdown(os.path.join(root_log_path, "time_breakdown"))
     # plot_time_scalability(os.path.join(root_log_path, 'scalability'))
