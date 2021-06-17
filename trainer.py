@@ -19,7 +19,7 @@ from seed import set_seed
 
 
 config = dict(
-    num_epochs=1,
+    num_epochs=50,
     batch_size=128,
     communication="TCP",
     # communication="UDP",
