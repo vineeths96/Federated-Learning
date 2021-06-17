@@ -197,6 +197,9 @@ def train(local_rank, world_size):
                         with timer("batch.reduce", epoch_frac):
                             bits_communicated += reducer.reduce(send_buffers, params)
 
+                            for param in params:
+                                param.mul_(config["num_clients"])
+
                     elif config["algorithm"] == "distributed_learning":
                         with timer("batch.accumulate", epoch_frac, verbosity=2):
                             for grad, send_buffer in zip(grads, send_buffers):
