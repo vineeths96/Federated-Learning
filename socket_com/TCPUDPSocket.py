@@ -77,13 +77,19 @@ class TCPUDPServer:
         # time.sleep(self.DELAY)
         # self.send_EOT(conn)
 
+        return
+
     def sendTCP_SOT(self, conn):
         encoded_message = self.encode(self.START_OF_MESSAGE)
         conn.send(encoded_message)
 
+        return
+
     def sendTCP_EOT(self, conn):
         encoded_message = self.encode(self.END_OF_MESSAGE)
         conn.send(encoded_message)
+
+        return
 
     def sendUDP(self, tensor, addr, local_rank):
         messages = tensor.split(self.CHUNK)
@@ -95,12 +101,16 @@ class TCPUDPServer:
 
             time.sleep(self.DELAY)
 
+        return
+
     def send(self, accumulated_grad_indices, client, device, local_rank):
         self.sendTCP_SOT(client)
         self.sendUDP(accumulated_grad_indices, device, local_rank)
         self.sendTCP_EOT(client)
         client.shutdown(1)
         client.close()
+
+        return
 
     def receive(self, conn, addr):
         buffer = []
@@ -196,6 +206,16 @@ class TCPUDPServer:
                     for thread in sending_threads:
                         thread.join()
 
+                    import gc
+                    gc.enable()
+
+                    del clients[:]
+                    del receiving_threads[:]
+                    del sending_threads[:]
+                    del self.DEVICES[:]
+
+                    gc.collect()
+
                     clients = []
                     receiving_threads = []
                     sending_threads = []
@@ -205,12 +225,16 @@ class TCPUDPServer:
         except KeyboardInterrupt:
             self.stop()
 
+        return
+
     def stop(self):
         self.serverTCP.shutdown(1)
         self.serverTCP.close()
 
         for ind in range(self.NUM_CLIENTS):
             self.serverUDP[ind].close()
+
+        return
 
 
 class TCPUDPClient:
@@ -270,13 +294,19 @@ class TCPUDPClient:
         # time.sleep(self.DELAY)
         # self.send_EOT(conn)
 
+        return
+
     def sendTCP_SOT(self):
         encoded_message = self.encode(self.START_OF_MESSAGE)
         self.clientTCP.send(encoded_message)
 
+        return
+
     def sendTCP_EOT(self):
         encoded_message = self.encode(self.END_OF_MESSAGE)
         self.clientTCP.send(encoded_message)
+
+        return
 
     def sendUDP(self, tensor):
         messages = tensor.split(self.CHUNK)
@@ -288,10 +318,14 @@ class TCPUDPClient:
 
             time.sleep(self.DELAY)
 
+        return
+
     def send(self, tensor):
         self.sendTCP_SOT()
         self.sendUDP(tensor)
         self.sendTCP_EOT()
+
+        return
 
     def receive(self):
         buffer = []
