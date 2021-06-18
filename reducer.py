@@ -134,7 +134,7 @@ class NoneAllReducer(Reducer):
 
             # print("Aggregated Grad", aggregated_grad)
             # flat_grad.buffer[:] = aggregated_grad
-            flat_grad.buffer[aggregated_grad != 0] = aggregated_grad[aggregated_grad != 0]
+            flat_grad.buffer[aggregated_grad != 0] = aggregated_grad[aggregated_grad != 0] / self._config["num_clients"]
 
             with torch.no_grad():
                 for out in grad_out:

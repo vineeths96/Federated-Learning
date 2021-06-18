@@ -197,9 +197,9 @@ def train(local_rank, world_size):
                         with timer("batch.reduce", epoch_frac):
                             bits_communicated += reducer.reduce(send_buffers, params)
 
-                            with torch.no_grad():
-                                for param in params:
-                                    param.mul_(1 / config["num_clients"])
+                            # with torch.no_grad():
+                            #     for param in params:
+                            #         param.mul_(1 / config["num_clients"])
 
                     elif config["algorithm"] == "distributed_learning":
                         with timer("batch.accumulate", epoch_frac, verbosity=2):
