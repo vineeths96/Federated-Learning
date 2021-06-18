@@ -133,7 +133,8 @@ class NoneAllReducer(Reducer):
                 raise NotImplementedError("Communication method not implemented.")
 
             # print("Aggregated Grad", aggregated_grad)
-            flat_grad.buffer[:] = aggregated_grad
+            # flat_grad.buffer[:] = aggregated_grad
+            flat_grad.buffer[aggregated_grad != 0] = aggregated_grad[aggregated_grad != 0]
 
             with torch.no_grad():
                 for out in grad_out:
