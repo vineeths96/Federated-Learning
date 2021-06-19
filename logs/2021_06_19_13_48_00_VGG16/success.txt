@@ -1,0 +1,25 @@
+Training completed at 2021-06-19 16:56:43.004821
+
+Best Top 1 Accuracy: 0.9140625
+Best Top 5 Accuracy: 1.0
+
+Training parameters
+num_epochs : 75
+batch_size : 128
+communication : TCPUDP
+server_address : 10.32.50.26
+timeout : 1
+dataset : CIFAR
+algorithm : local_sgd
+architecture : VGG16
+gradient_size : {'CNN': 582026, 'ResNet18': 11173962, 'ResNet50': 23520842, 'VGG16': 14728266, 'MobileNet': 3217226, 'MobileNetV2': 2296922}
+local_steps : 100
+chunk : 15000
+delay : 0
+reducer : NoneAllReducer
+seed : 42
+log_verbosity : 2
+lr : 0.1
+local_rank : 0
+num_clients : 2
+Bits communicated: 137620917504
