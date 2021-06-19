@@ -26,20 +26,21 @@ config = dict(
     communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
-    dataset="CIFAR",
-    # dataset="MNIST",
-    algorithm="local_sgd",
-    # algorithm="distributed_learning",
-    # architecture="CNN",
+    # dataset="CIFAR",
+    dataset="MNIST",
+    # algorithm="local_sgd",
+    algorithm="distributed_learning",
+    architecture="CNN",
     # architecture="ResNet18",
     # architecture="ResNet50",
-    architecture="VGG16",
+    # architecture="VGG16",
     # architecture="MobileNet",
     # architecture="MobileNetV2",
     gradient_size={"CNN": 582026,"ResNet18": 11173962, "ResNet50": 23520842, "VGG16": 14728266, "MobileNet": 3217226, "MobileNetV2": 2296922},
     local_steps=100,
     chunk=15000,
     delay=0,
+    server_delay=10e-3,
     # K=10000,
     # compression=1/1000,
     # quantization_level=6,
@@ -211,6 +212,8 @@ def train(local_rank, world_size):
 
                         with timer("batch.step", epoch_frac, verbosity=2):
                             optimizer.step()
+                    else:
+                        raise NotImplementedError("Dataset is not implemented")
                 else:
                     with timer("batch.step", epoch_frac, verbosity=2):
                         optimizer.step()

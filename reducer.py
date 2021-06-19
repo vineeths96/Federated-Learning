@@ -133,8 +133,12 @@ class NoneAllReducer(Reducer):
                 raise NotImplementedError("Communication method not implemented.")
 
             # print("Aggregated Grad", aggregated_grad)
-            # flat_grad.buffer[:] = aggregated_grad
-            flat_grad.buffer[aggregated_grad != 0] = aggregated_grad[aggregated_grad != 0] / self._config["num_clients"]
+            if self._config["algorithm"] == "local_sgd":
+                flat_grad.buffer[aggregated_grad != 0] = aggregated_grad[aggregated_grad != 0] / self._config["num_clients"]
+            elif self._config["algorithm"] == "distributed_learning":
+                flat_grad.buffer[:] = aggregated_grad
+            else:
+                raise NotImplementedError("Dataset is not implemented")
 
             with torch.no_grad():
                 for out in grad_out:

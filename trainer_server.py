@@ -9,27 +9,28 @@ from socket_com.TCPUDPSocket import TCPUDPServer, TCPUDPKServer, TCPUDPTopKServe
 
 
 config = dict(
-    num_epochs=100,
+    num_epochs=75,
     batch_size=128,
     # communication="TCP",
     # communication="UDP",
     communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
-    dataset="CIFAR",
-    # dataset="MNIST",
-    algorithm="local_sgd",
-    # algorithm="distributed_learning",
-    # architecture="CNN",
+    # dataset="CIFAR",
+    dataset="MNIST",
+    # algorithm="local_sgd",
+    algorithm="distributed_learning",
+    architecture="CNN",
     # architecture="ResNet18",
     # architecture="ResNet50",
-    architecture="VGG16",
+    # architecture="VGG16",
     # architecture="MobileNet",
     # architecture="MobileNetV2",
     gradient_size={"CNN": 582026,"ResNet18": 11173962, "ResNet50": 23520842, "VGG16": 14728266, "MobileNet": 3217226, "MobileNetV2": 2296922},
     local_steps=100,
     chunk=15000,
-    delay=10e-3,
+    delay=0,
+    server_delay=10e-3,
     # K=10000,
     # compression=1/1000,
     # quantization_level=6,
@@ -54,7 +55,7 @@ def start_server(world_size):
                 SERVER=config["server_address"],
                 NUM_CLIENTS=config["num_clients"],
                 GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
-                DELAY=config["delay"],
+                DELAY=config["server_delay"],
                 SEED=config["seed"],
             )
         elif config["communication"] == "UDP":
@@ -64,7 +65,7 @@ def start_server(world_size):
                 TIMEOUT=config["timeout"],
                 GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
                 CHUNK=config["chunk"],
-                DELAY=config["delay"],
+                DELAY=config["server_delay"],
                 SEED=config["seed"],
             )
         elif config["communication"] == "TCPUDP":
@@ -74,7 +75,7 @@ def start_server(world_size):
                 TIMEOUT=config["timeout"],
                 GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
                 CHUNK=config["chunk"],
-                DELAY=config["delay"],
+                DELAY=config["server_delay"],
                 SEED=config["seed"],
             )
         else:
@@ -86,7 +87,7 @@ def start_server(world_size):
                 NUM_CLIENTS=config["num_clients"],
                 GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
                 K=config["K"],
-                DELAY=config["delay"],
+                DELAY=config["server_delay"],
                 SEED=config["seed"],
             )
         elif config["communication"] == "UDP":
@@ -97,7 +98,7 @@ def start_server(world_size):
                 GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
                 K=config["K"],
                 CHUNK=config["chunk"],
-                DELAY=config["delay"],
+                DELAY=config["server_delay"],
                 SEED=config["seed"],
             )
         elif config["communication"] == "TCPUDP":
@@ -108,7 +109,7 @@ def start_server(world_size):
                 GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
                 K=config["K"],
                 CHUNK=config["chunk"],
-                DELAY=config["delay"],
+                DELAY=config["server_delay"],
                 SEED=config["seed"],
             )
         else:
@@ -120,7 +121,7 @@ def start_server(world_size):
         #         NUM_CLIENTS=config["num_clients"],
         #         GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
         #         K=config["K"],
-        #         DELAY=config["delay"],
+        #         DELAY=config["server_delay"],
         #         SEED=config["seed"],
         #     )
         # elif config["communication"] == "UDP":
@@ -131,7 +132,7 @@ def start_server(world_size):
         #         GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
         #         K=config["K"],
         #         CHUNK=config["chunk"],
-        #         DELAY=config["delay"],
+        #         DELAY=config["server_delay"],
         #         SEED=config["seed"],
         #     )
         if config["communication"] == "TCPUDP":
@@ -142,7 +143,7 @@ def start_server(world_size):
                 GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
                 K=config["K"],
                 CHUNK=config["chunk"],
-                DELAY=config["delay"],
+                DELAY=config["server_delay"],
                 SEED=config["seed"],
             )
         else:
