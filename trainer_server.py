@@ -9,11 +9,11 @@ from socket_com.TCPUDPSocket import TCPUDPServer, TCPUDPKServer, TCPUDPTopKServe
 
 
 config = dict(
-    num_epochs=75,
+    num_epochs=10,
     batch_size=128,
-    # communication="TCP",
+    communication="TCP",
     # communication="UDP",
-    communication="TCPUDP",
+    # communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
     # dataset="CIFAR",
@@ -27,7 +27,7 @@ config = dict(
     # architecture="MobileNet",
     # architecture="MobileNetV2",
     gradient_size={"CNN": 582026,"ResNet18": 11173962, "ResNet50": 23520842, "VGG16": 14728266, "MobileNet": 3217226, "MobileNetV2": 2296922},
-    local_steps=100,
+    local_steps=1,
     chunk=15000,
     delay=0,
     server_delay=10e-3,
