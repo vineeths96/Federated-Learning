@@ -29,8 +29,7 @@ def mark_inset(parent_axes, inset_axes, loc1a=1, loc1b=1, loc2a=2, loc2b=2, **kw
 
 
 def plot_loss_curves(log_path):
-    models = ["ResNet50", "VGG16"]
-    # models = ["CNN"]
+    models = ["CNN", "VGG16"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
@@ -45,6 +44,7 @@ def plot_loss_curves(log_path):
             quant_level = None
             higher_quant_level = None
             compression = None
+            communication = None
 
             with open(os.path.join(experiment, "success.txt")) as file:
                 for line in file:
@@ -61,6 +61,9 @@ def plot_loss_curves(log_path):
                     if line.startswith("compression"):
                         compression = line.split(": ")[-1]
 
+                    if line.startswith("communication"):
+                        communication = line.split(": ")[-1]
+
             if higher_quant_level:
                 label = " ".join([reducer, quant_level, "&", higher_quant_level, "bits"])
             elif quant_level:
@@ -68,7 +71,10 @@ def plot_loss_curves(log_path):
             elif compression:
                 label = " ".join([reducer, "K:", compression])
             else:
-                label = reducer
+                if communication == "TCP":
+                    label = "AllReduce SGD - TCP"
+                elif communication == "TCPUDP":
+                    label = "AllReduce SGD - UDP"
 
             log_dict = np.load(os.path.join(experiment, "log_dict.npy"), allow_pickle=True)
             loss = log_dict[()].get("test_loss")
@@ -100,8 +106,7 @@ def plot_loss_curves(log_path):
 
 
 def plot_loss_time_curves(log_path):
-    models = ["ResNet50", "VGG16"]
-    # models = ["CNN"]
+    models = ["CNN", "VGG16"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
@@ -116,6 +121,7 @@ def plot_loss_time_curves(log_path):
             quant_level = None
             higher_quant_level = None
             compression = None
+            communication = None
 
             with open(os.path.join(experiment, "success.txt")) as file:
                 for line in file:
@@ -132,6 +138,9 @@ def plot_loss_time_curves(log_path):
                     if line.startswith("compression"):
                         compression = line.split(": ")[-1]
 
+                    if line.startswith("communication"):
+                        communication = line.split(": ")[-1]
+
             if higher_quant_level:
                 label = " ".join([reducer, quant_level, "&", higher_quant_level, "bits"])
             elif quant_level:
@@ -139,7 +148,10 @@ def plot_loss_time_curves(log_path):
             elif compression:
                 label = " ".join([reducer, "K:", compression])
             else:
-                label = reducer
+                if communication == "TCP":
+                    label = "AllReduce SGD - TCP"
+                elif communication == "TCPUDP":
+                    label = "AllReduce SGD - UDP"
 
             log_dict = np.load(os.path.join(experiment, "log_dict.npy"), allow_pickle=True)
             loss = log_dict[()].get("test_loss")
@@ -172,8 +184,7 @@ def plot_loss_time_curves(log_path):
 
 
 def plot_top1_accuracy_curves(log_path):
-    models = ["ResNet50", "VGG16"]
-    # models = ["CNN"]
+    models = ["CNN", "VGG16"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
@@ -188,6 +199,7 @@ def plot_top1_accuracy_curves(log_path):
             quant_level = None
             higher_quant_level = None
             compression = None
+            communication = None
 
             with open(os.path.join(experiment, "success.txt")) as file:
                 for line in file:
@@ -204,6 +216,9 @@ def plot_top1_accuracy_curves(log_path):
                     if line.startswith("compression"):
                         compression = line.split(": ")[-1]
 
+                    if line.startswith("communication"):
+                        communication = line.split(": ")[-1]
+
             if higher_quant_level:
                 label = " ".join([reducer, quant_level, "&", higher_quant_level, "bits"])
             elif quant_level:
@@ -211,7 +226,10 @@ def plot_top1_accuracy_curves(log_path):
             elif compression:
                 label = " ".join([reducer, "K:", compression])
             else:
-                label = reducer
+                if communication == "TCP":
+                    label = "AllReduce SGD - TCP"
+                elif communication == "TCPUDP":
+                    label = "AllReduce SGD - UDP"
 
             log_dict = np.load(os.path.join(experiment, "log_dict.npy"), allow_pickle=True)
             top1_accuracy = log_dict[()].get("test_top1_accuracy")
@@ -243,8 +261,7 @@ def plot_top1_accuracy_curves(log_path):
 
 
 def plot_top5_accuracy_curves(log_path):
-    models = ["ResNet50", "VGG16"]
-    # models = ["CNN"]
+    models = ["CNN", "VGG16"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
@@ -259,6 +276,7 @@ def plot_top5_accuracy_curves(log_path):
             quant_level = None
             higher_quant_level = None
             compression = None
+            communication = None
 
             with open(os.path.join(experiment, "success.txt")) as file:
                 for line in file:
@@ -275,6 +293,9 @@ def plot_top5_accuracy_curves(log_path):
                     if line.startswith("compression"):
                         compression = line.split(": ")[-1]
 
+                    if line.startswith("communication"):
+                        communication = line.split(": ")[-1]
+
             if higher_quant_level:
                 label = " ".join([reducer, quant_level, "&", higher_quant_level, "bits"])
             elif quant_level:
@@ -282,7 +303,10 @@ def plot_top5_accuracy_curves(log_path):
             elif compression:
                 label = " ".join([reducer, "K:", compression])
             else:
-                label = reducer
+                if communication == "TCP":
+                    label = "AllReduce SGD - TCP"
+                elif communication == "TCPUDP":
+                    label = "AllReduce SGD - UDP"
 
             log_dict = np.load(os.path.join(experiment, "log_dict.npy"), allow_pickle=True)
             top5_accuracy = log_dict[()].get("test_top5_accuracy")
@@ -314,8 +338,7 @@ def plot_top5_accuracy_curves(log_path):
 
 
 def plot_top1_accuracy_time_curves(log_path):
-    models = ["ResNet50", "VGG16"]
-    # models = ["CNN"]
+    models = ["CNN", "VGG16"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
@@ -330,6 +353,7 @@ def plot_top1_accuracy_time_curves(log_path):
             quant_level = None
             higher_quant_level = None
             compression = None
+            communication = None
 
             with open(os.path.join(experiment, "success.txt")) as file:
                 for line in file:
@@ -346,6 +370,9 @@ def plot_top1_accuracy_time_curves(log_path):
                     if line.startswith("compression"):
                         compression = line.split(": ")[-1]
 
+                    if line.startswith("communication"):
+                        communication = line.split(": ")[-1]
+
             if higher_quant_level:
                 label = " ".join([reducer, quant_level, "&", higher_quant_level, "bits"])
             elif quant_level:
@@ -353,7 +380,10 @@ def plot_top1_accuracy_time_curves(log_path):
             elif compression:
                 label = " ".join([reducer, "K:", compression])
             else:
-                label = reducer
+                if communication == "TCP":
+                    label = "AllReduce SGD - TCP"
+                elif communication == "TCPUDP":
+                    label = "AllReduce SGD - UDP"
 
             log_dict = np.load(os.path.join(experiment, "log_dict.npy"), allow_pickle=True)
             top1_accuracy = log_dict[()].get("test_top1_accuracy")
@@ -386,7 +416,7 @@ def plot_top1_accuracy_time_curves(log_path):
 
 
 def plot_time_per_batch_curves(log_path):
-    models = ["ResNet50", "VGG16"]
+    models = ["CNN", "VGG16"]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     for group_ind, experiment_group in enumerate(experiment_groups):
@@ -445,21 +475,21 @@ def plot_time_per_batch_curves(log_path):
 def plot_time_breakdown(log_path):
     time_labels = [
         "batch",
-        "batch.accumulate",
-        "batch.backward",
-        "batch.evaluate",
+        # "batch.accumulate",
         "batch.forward",
+        "batch.backward",
         "batch.reduce",
+        "batch.evaluate",
         "batch.step",
     ]
 
-    models = ["ResNet50", "VGG16"]
+    models = ["CNN", "VGG16"]
 
-    [plt.figure(num=ind, figsize=[10, 7]) for ind in range(len(models))]
+    [plt.figure(num=ind) for ind in range(len(models))]
     experiment_groups = [glob.glob(f"{log_path}/*{model}") for model in models]
 
     events = np.arange(len(time_labels))
-    width = 0.15
+    width = 0.25
 
     for group_ind, experiment_group in enumerate(experiment_groups):
         plt.figure(num=group_ind)
@@ -472,6 +502,8 @@ def plot_time_breakdown(log_path):
             quant_level = None
             higher_quant_level = None
             compression = None
+            rank = None
+            communication = None
 
             with open(os.path.join(experiment, "success.txt")) as file:
                 for line in file:
@@ -488,38 +520,53 @@ def plot_time_breakdown(log_path):
                     if line.startswith("compression"):
                         compression = line.split(": ")[-1]
 
+                    if line.startswith("rank"):
+                        rank = line.split(": ")[-1]
+
+                    if line.startswith("communication"):
+                        communication = line.split(": ")[-1]
+
                 if higher_quant_level:
-                    label = " ".join([reducer, quant_level, "&", higher_quant_level, "bits"])
+                    label = " ".join([reducer, f"({quant_level},{higher_quant_level})", "bits"])
                 elif quant_level:
                     label = " ".join([reducer, quant_level, "bits"])
                 elif compression:
                     label = " ".join([reducer, "K:", compression])
+                elif rank:
+                    label = " ".join([reducer, "Rank", rank])
                 else:
-                    label = reducer
+                    if communication == "TCP":
+                        label = "AllReduce SGD - TCP"
+                    elif communication == "TCPUDP":
+                        label = "AllReduce SGD - UDP"
 
-            time_df = pd.read_json(os.path.join(experiment, "timer_summary_0.json")).loc["average_duration"]
+            data = json.load(open(os.path.join(experiment, "timer_summary_0.json")))
+            time_df = pd.DataFrame(data).loc["average_duration"]
             time_values = time_df[time_labels].values
+
+            worker = experiment.split("/")[-1].split('_')[0]
 
             plt.bar(
                 events + (ind - num_experiments / 2) * width,
                 time_values,
                 width,
-                label=label,
+                label=f"{label}",
             )
 
-        plt.grid()
-        plt.xticks(events, time_labels)
-        plt.ylabel("Average time")
-        plt.title(f"Time breakdown {models[group_ind]}")
+        # plt.grid()
+        time_labels_axis = [time_label.split(".")[-1] for time_label in time_labels]
+        plt.xticks(events, time_labels_axis)
+        plt.ylabel("Average Time (sec)")
+        # plt.title(f"Time breakdown {models[group_ind]}")
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f"./plots/time_breakdown_{models[group_ind]}.png")
+        plt.savefig(f"./plots/time_breakdown_{models[group_ind]}.svg")
     plt.show()
 
 
 def plot_time_scalability(log_path):
     time_labels = ["batch"]
-    models = ["ResNet50", "VGG16"]
+    models = ["CNN", "VGG16"]
     # instances = ["P2", "P3", "P2 Multi Node", "P3 Multi Node"]
     instances = ["P3", "P3 Multi Node"]
 
@@ -613,7 +660,7 @@ def plot_time_scalability(log_path):
 
 def plot_throughput_scalability(log_path):
     time_labels = ["batch"]
-    models = ["ResNet50", "VGG16"]
+    models = ["CNN", "VGG16"]
     # instances = ["P2", "P3", "P2 Multi Node", "P3 Multi Node"]
     instances = ["P3", "P3 Multi Node"]
 
@@ -703,7 +750,7 @@ def plot_throughput_scalability(log_path):
 
 
 def plot_waiting_times(log_path):
-    models = {"ResNet50": 1, "VGG16": 2}
+    models = {"CNN": 1, "VGG16": 2}
     instances = ["P3 Waiting Time"]  # , "P3 Waiting Time Multi Node"]
 
     for instance in instances:
@@ -753,7 +800,7 @@ def plot_waiting_times(log_path):
 
 
 def plot_waiting_times_AWS(log_path):
-    models = {"ResNet50": 1, "VGG16": 2}
+    models = {"CNN": 1, "VGG16": 2}
     instances = ["P3 Waiting Time"]  # , "P3 Waiting Time Multi Node"]
 
     for instance in instances:
@@ -823,7 +870,7 @@ def plot_waiting_times_AWS(log_path):
 
 
 def plot_mean_variance_AWS(log_path, num_workers):
-    models = {"ResNet50": 1, "VGG16": 2}
+    models = {"CNN": 1, "VGG16": 2}
     instances = ["P3 Waiting Time"]  # , "P3 Waiting Time Multi Node"]
 
     for instance in instances:
@@ -923,7 +970,7 @@ def plot_mean_variance_AWS(log_path, num_workers):
 
 
 def plot_reduce_times_AWS(log_path):
-    models = {"ResNet50": 1, "VGG16": 2}
+    models = {"CNN": 1, "VGG16": 2}
     instances = ["P3 Waiting Time"]  # , "P3 Waiting Time Multi Node"]
 
     for instance in instances:
@@ -995,7 +1042,7 @@ def plot_reduce_times_AWS(log_path):
 
 
 def plot_heterogenous_AWS(log_path):
-    models = {"ResNet50": 1, "VGG16": 2}
+    models = {"CNN": 1, "VGG16": 2}
     dynamic_batches = [
         "NAR",
         "NAR_128+8_128",
@@ -1068,7 +1115,7 @@ def plot_heterogenous_AWS(log_path):
 
 
 def plot_histogram_heterogenous_AWS(log_path):
-    models = {"ResNet50": 1, "VGG16": 2}
+    models = {"CNN": 1, "VGG16": 2}
     dynamic_batches = ["NAR", "NAR_128+8_128", "NAR_128+16_128", "NAR_128+32_128", "NAR_128+64_128", "NAR_128+128_128"]
 
     for dynamic_batch in dynamic_batches:
@@ -1133,7 +1180,7 @@ def plot_histogram_heterogenous_AWS(log_path):
 
 
 def plot_mean_variance_reduce_time_AWS(log_path, num_workers):
-    models = {"ResNet50": 1, "VGG16": 2}
+    models = {"CNN": 1, "VGG16": 2}
     instances = ["P3 Waiting Time"]  # , "P3 Waiting Time Multi Node"]
 
     for instance in instances:
@@ -1245,7 +1292,7 @@ def plot_mean_variance_reduce_time_AWS(log_path, num_workers):
 
 
 def plot_performance_modelling(log_path):
-    models = ["ResNet50", "VGG16"]
+    models = ["CNN", "VGG16"]
     instances = ["P3"]  # , "P3 Multi Node"]
 
     batch_size = 128
@@ -1387,14 +1434,14 @@ def plot_performance_modelling(log_path):
 if __name__ == "__main__":
     root_log_path = "./logs/plot_logs/"
 
-    plot_loss_curves(os.path.join(root_log_path, "convergence"))
-    plot_loss_time_curves(os.path.join(root_log_path, "convergence"))
-    plot_top1_accuracy_curves(os.path.join(root_log_path, "convergence"))
-    plot_top1_accuracy_time_curves(os.path.join(root_log_path, "convergence"))
-    plot_top5_accuracy_curves(os.path.join(root_log_path, "convergence"))
+    # plot_loss_curves(os.path.join(root_log_path, "convergence"))
+    # plot_loss_time_curves(os.path.join(root_log_path, "convergence"))
+    # plot_top1_accuracy_curves(os.path.join(root_log_path, "convergence"))
+    # plot_top1_accuracy_time_curves(os.path.join(root_log_path, "convergence"))
+    # plot_top5_accuracy_curves(os.path.join(root_log_path, "convergence"))
 
     # plot_time_per_batch_curves(os.path.join(root_log_path, "convergence"))
-    # plot_time_breakdown(os.path.join(root_log_path, "time_breakdown"))
+    # plot_time_breakdown(os.path.join(root_log_path, "convergence"))
     # plot_time_scalability(os.path.join(root_log_path, 'scalability'))
     # plot_throughput_scalability(os.path.join(root_log_path, 'scalability'))
     # plot_waiting_times(os.path.join(root_log_path, 'waiting_times'))
