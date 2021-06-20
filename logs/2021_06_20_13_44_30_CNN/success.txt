@@ -1,0 +1,26 @@
+Training completed at 2021-06-20 15:07:38.769713
+
+Best Top 1 Accuracy: 0.96484375
+Best Top 5 Accuracy: 1.0
+
+Training parameters
+num_epochs : 10
+batch_size : 128
+communication : TCPUDP
+server_address : 10.32.50.26
+timeout : 1
+dataset : MNIST
+algorithm : distributed_learning
+architecture : CNN
+gradient_size : {'CNN': 582026, 'ResNet18': 11173962, 'ResNet50': 23520842, 'VGG16': 14728266, 'MobileNet': 3217226, 'MobileNetV2': 2296922}
+local_steps : 1
+chunk : 15000
+delay : 0
+server_delay : 0.01
+reducer : NoneAllReducer
+seed : 42
+log_verbosity : 2
+lr : 0.1
+local_rank : 0
+num_clients : 2
+Bits communicated: 43582106880
