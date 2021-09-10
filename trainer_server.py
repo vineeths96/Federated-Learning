@@ -16,27 +16,29 @@ config = dict(
     # communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
-    # dataset="CIFAR",
-    dataset="MNIST",
-    # algorithm="local_sgd",
-    algorithm="distributed_learning",
-    architecture="CNN",
-    # architecture="ResNet18",
+    dataset="CIFAR",
+    # dataset="MNIST",
+    algorithm="local_sgd",
+    # algorithm="distributed_learning",
+    # architecture="CNN",
+    architecture="ResNet18",
     # architecture="ResNet50",
     # architecture="VGG16",
     # architecture="MobileNet",
     # architecture="MobileNetV2",
-    gradient_size={"CNN": 582026,"ResNet18": 11173962, "ResNet50": 23520842, "VGG16": 14728266, "MobileNet": 3217226, "MobileNetV2": 2296922},
+    gradient_size={
+        "CNN": 582026,
+        "ResNet18": 11173962,
+        "ResNet50": 23520842,
+        "VGG16": 14728266,
+        "MobileNet": 3217226,
+        "MobileNetV2": 2296922,
+    },
     local_steps=1,
     chunk=15000,
     delay=0,
     server_delay=10e-3,
     # K=10000,
-    # compression=1/1000,
-    # quantization_level=6,
-    # higher_quantization_level=10,
-    # quantization_levels=[6, 10, 16],
-    # rank=1,
     reducer="NoneAllReducer",
     # reducer="GlobalRandKReducer",
     # reducer="GlobalTopKReducer",
@@ -116,7 +118,7 @@ def start_server(world_size):
             raise NotImplementedError("Communication method not implemented.")
     elif config["reducer"] == "GlobalTopKReducer" or config["reducer"] == "GlobalTopKMemoryReducer":
         # if config["communication"] == "TCP":
-        #     server = TCPKServer(
+        #     server = TCPTopKServer(
         #         SERVER=config["server_address"],
         #         NUM_CLIENTS=config["num_clients"],
         #         GRADIENT_SIZE=config["gradient_size"][config["architecture"]],
@@ -125,7 +127,7 @@ def start_server(world_size):
         #         SEED=config["seed"],
         #     )
         # elif config["communication"] == "UDP":
-        #     server = UDPKServer(
+        #     server = UDPTopKServer(
         #         SERVER=config["server_address"],
         #         NUM_CLIENTS=config["num_clients"],
         #         TIMEOUT=config["timeout"],

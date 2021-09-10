@@ -3,29 +3,6 @@ import random
 import numpy as np
 import torch.distributed
 
-
-from compressors import (
-    NoneCompressor,
-    QSGDCompressor,
-    QSGDWECCompressor,
-    QSGDWECModCompressor,
-    TernGradCompressor,
-    TernGradModCompressor,
-    QSGDMaxNormCompressor,
-    # QSGDBPAllReduceCompressor,
-    # QSGDBPCompressor,
-    GlobalRandKMaxNormCompressor,
-    MaxNormGlobalRandKCompressor,
-    NUQSGDModCompressor,
-    NUQSGDMaxNormCompressor,
-    QSGDMaxNormBiasedCompressor,
-    NUQSGDMaxNormBiasedCompressor,
-    QSGDMaxNormTwoScaleCompressor,
-    GlobalRandKMaxNormTwoScaleCompressor,
-    QSGDMaxNormMultiScaleCompressor,
-    # GlobalRandKMultiScaleCompressor,
-)
-
 from seed import set_seed
 from socket_com.TCPSocket import TCPClient, TCPKClient
 from socket_com.UDPSocket import UDPClient, UDPKClient
@@ -74,7 +51,7 @@ class TensorBuffer:
 
 class NoneAllReducer(Reducer):
     """
-    All reduce reducer without any compressing.
+    All reduce reducer.
     """
 
     def __init__(self, config, device, timer):
@@ -95,7 +72,6 @@ class NoneAllReducer(Reducer):
                     DELAY=self._config["delay"],
                     SEED=self._config["seed"],
                 )
-                client_grad = flat_grad.buffer.cpu()
             elif self._config["communication"] == "UDP":
                 client = UDPClient(
                     SERVER=self._config["server_address"],
@@ -105,8 +81,6 @@ class NoneAllReducer(Reducer):
                     DELAY=self._config["delay"],
                     SEED=self._config["seed"],
                 )
-
-                client_grad = flat_grad.buffer.cpu()
             elif self._config["communication"] == "TCPUDP":
                 client = TCPUDPClient(
                     SERVER=self._config["server_address"],
@@ -117,35 +91,31 @@ class NoneAllReducer(Reducer):
                     SEED=self._config["seed"],
                     LOCAL_RANK=self._config["local_rank"],
                 )
-
-                client_grad = flat_grad.buffer.cpu()
             else:
                 raise NotImplementedError("Communication method not implemented.")
+
+            client_grad = flat_grad.buffer.cpu()
 
             client.send(client_grad.clone())
             # print("Local Grad", client_grad)
 
-            if self._config["communication"] == "TCP":
-                aggregated_grad = client.receive().to(self._device)
-            elif self._config["communication"] == "UDP" or self._config["communication"] == "TCPUDP":
-                aggregated_grad = client.receive().to(self._device)
-            else:
-                raise NotImplementedError("Communication method not implemented.")
-
+            aggregated_grad = client.receive().to(self._device)
             # print("Aggregated Grad", aggregated_grad)
+
             if self._config["algorithm"] == "local_sgd":
-                flat_grad.buffer[aggregated_grad != 0] = aggregated_grad[aggregated_grad != 0] / self._config["num_clients"]
+                flat_grad.buffer[aggregated_grad != 0] = (
+                    aggregated_grad[aggregated_grad != 0] / self._config["num_clients"]
+                )
             elif self._config["algorithm"] == "distributed_learning":
-                flat_grad.buffer[:] = aggregated_grad
+                flat_grad.buffer[:] = aggregated_grad / self._config["num_clients"]
             else:
-                raise NotImplementedError("Dataset is not implemented")
+                raise NotImplementedError("Algorithm not implemented")
 
             with torch.no_grad():
                 for out in grad_out:
                     out[:] = 0.0
 
                 for grad, out in zip(flat_grad, grad_out):
-                    # TODO Average or Sum
                     grad = grad.to(self._device)
                     out.add_(other=grad)
 
@@ -217,7 +187,6 @@ class GlobalRandKReducer(Reducer):
                 raise NotImplementedError("Communication method not implemented.")
 
             RandK_indices_grad = torch.vstack([RandK_indices, RandK_flat_grad.cpu()]).T
-            # print(RandK_indices)
 
             client.send(RandK_indices_grad.clone())
             # print("Local Grad", RandK_indices_grad)
@@ -238,20 +207,15 @@ class GlobalRandKReducer(Reducer):
             # nonreceived_coordinates = torch.tensor(
             #     np.setdiff1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy())
             # )
-            #
-            # delay_received_coordinates = torch.tensor(
-            #     np.setdiff1d(aggregated_RandK_indices.unique().cpu().numpy(), RandK_indices.unique().cpu().numpy())
-            # )
 
         with self._timer("reduce.setgrad", verbosity=2):
             flat_grad.buffer.zero_()
-            flat_grad.buffer[aggregated_RandK_indices.long()] = aggregated_RandK_grad
+            flat_grad.buffer[aggregated_RandK_indices.long()] = aggregated_RandK_grad / self._config["num_clients"]
 
             for out in grad_out:
                 out[:] = 0.0
 
             for grad, out in zip(flat_grad, grad_out):
-                # TODO Average or Sum
                 grad = grad.to(self._device)
                 out.add_(other=grad, alpha=1)
 
@@ -265,7 +229,7 @@ class GlobalRandKReducer(Reducer):
 
 class GlobalRandKMemoryReducer(Reducer):
     """
-    All reduce reducer random K indices.
+    All reduce reducer random K indices with memory.
     """
 
     def __init__(self, config, device, timer):
@@ -334,7 +298,6 @@ class GlobalRandKMemoryReducer(Reducer):
                 raise NotImplementedError("Communication method not implemented.")
 
             RandK_indices_grad = torch.vstack([RandK_indices, RandK_flat_grad.cpu()]).T
-            # print(RandK_indices)
 
             client.send(RandK_indices_grad.clone())
             # print("Local Grad", RandK_indices_grad)
@@ -355,20 +318,15 @@ class GlobalRandKMemoryReducer(Reducer):
             # nonreceived_coordinates = torch.tensor(
             #     np.setdiff1d(RandK_indices.unique().cpu().numpy(), aggregated_RandK_indices.unique().cpu().numpy())
             # )
-            #
-            # delay_received_coordinates = torch.tensor(
-            #     np.setdiff1d(aggregated_RandK_indices.unique().cpu().numpy(), RandK_indices.unique().cpu().numpy())
-            # )
 
         with self._timer("reduce.setgrad", verbosity=2):
             flat_grad.buffer.zero_()
-            flat_grad.buffer[aggregated_RandK_indices.long()] = aggregated_RandK_grad
+            flat_grad.buffer[aggregated_RandK_indices.long()] = aggregated_RandK_grad / self._config["num_clients"]
 
             for out in grad_out:
                 out[:] = 0.0
 
             for grad, out in zip(flat_grad, grad_out):
-                # TODO Average or Sum
                 grad = grad.to(self._device)
                 out.add_(other=grad, alpha=1)
 
@@ -383,7 +341,6 @@ class GlobalRandKMemoryReducer(Reducer):
 class GlobalTopKReducer(Reducer):
     """
     TopK reducer with K most important gradient updates global.
-    All gathers values and indices of top-K from each worker and updates.
     """
 
     def __init__(self, config, device, timer):
@@ -405,7 +362,7 @@ class GlobalTopKReducer(Reducer):
 
         with self._timer("reduce.allreduce_K", verbosity=2):
             # if self._config["communication"] == "TCP":
-            #     client = TCPKClient(
+            #     client = TCPTopKClient(
             #         SERVER=self._config["server_address"],
             #         GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
             #         K=self._config["K"],
@@ -413,7 +370,7 @@ class GlobalTopKReducer(Reducer):
             #         SEED=self._config["seed"],
             #     )
             # elif self._config["communication"] == "UDP":
-            #     client = UDPKClient(
+            #     client = UDPTopKClient(
             #         SERVER=self._config["server_address"],
             #         TIMEOUT=self._config["timeout"],
             #         GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
@@ -437,7 +394,6 @@ class GlobalTopKReducer(Reducer):
                 raise NotImplementedError("Communication method not implemented.")
 
             TopK_indices_grad = torch.vstack([TopK_indices, TopK_flat_grad]).cpu().T
-            # print(TopK_indices_grad)
 
             client.send(TopK_indices_grad.clone())
             # print("Local Grad", TopK_indices_grad)
@@ -457,13 +413,12 @@ class GlobalTopKReducer(Reducer):
 
         with self._timer("reduce.setgrad", verbosity=2):
             flat_grad.buffer.zero_()
-            flat_grad.buffer[aggregated_TopK_indices.long()] = aggregated_TopK_grad
+            flat_grad.buffer[aggregated_TopK_indices.long()] = aggregated_TopK_grad / self._config["num_clients"]
 
             for out in grad_out:
                 out[:] = 0.0
 
             for grad, out in zip(flat_grad, grad_out):
-                # TODO Average or Sum
                 grad = grad.to(self._device)
                 out.add_(other=grad, alpha=1)
 
@@ -477,8 +432,7 @@ class GlobalTopKReducer(Reducer):
 
 class GlobalTopKMemoryReducer(Reducer):
     """
-    TopK reducer with K most important gradient updates global.
-    All gathers values and indices of top-K from each worker and updates.
+    TopK reducer with K most important gradient updates global with memory.
     """
 
     def __init__(self, config, device, timer):
@@ -511,7 +465,7 @@ class GlobalTopKMemoryReducer(Reducer):
 
         with self._timer("reduce.allreduce_K", verbosity=2):
             # if self._config["communication"] == "TCP":
-            #     client = TCPKClient(
+            #     client = TCPTopKClient(
             #         SERVER=self._config["server_address"],
             #         GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
             #         K=self._config["K"],
@@ -519,7 +473,7 @@ class GlobalTopKMemoryReducer(Reducer):
             #         SEED=self._config["seed"],
             #     )
             # elif self._config["communication"] == "UDP":
-            #     client = UDPKClient(
+            #     client = UDPTopKClient(
             #         SERVER=self._config["server_address"],
             #         TIMEOUT=self._config["timeout"],
             #         GRADIENT_SIZE=self._config["gradient_size"][self._config["architecture"]],
@@ -543,7 +497,6 @@ class GlobalTopKMemoryReducer(Reducer):
                 raise NotImplementedError("Communication method not implemented.")
 
             TopK_indices_grad = torch.vstack([TopK_indices, TopK_flat_grad]).cpu().T
-            # print(TopK_indices)
 
             client.send(TopK_indices_grad.clone())
             # print("Local Grad", TopK_indices_grad)
@@ -563,13 +516,12 @@ class GlobalTopKMemoryReducer(Reducer):
 
         with self._timer("reduce.setgrad", verbosity=2):
             flat_grad.buffer.zero_()
-            flat_grad.buffer[aggregated_TopK_indices.long()] = aggregated_TopK_grad
+            flat_grad.buffer[aggregated_TopK_indices.long()] = aggregated_TopK_grad / self._config["num_clients"]
 
             for out in grad_out:
                 out[:] = 0.0
 
             for grad, out in zip(flat_grad, grad_out):
-                # TODO Average or Sum
                 grad = grad.to(self._device)
                 out.add_(other=grad, alpha=1)
 

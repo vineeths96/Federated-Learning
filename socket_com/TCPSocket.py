@@ -46,9 +46,6 @@ class TCPServer:
         #     self.RECV_BUF_SIZE)
 
         self.server.bind(self.ADDR)
-        buffer_size = self.server.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
-        print("Buffer size [After]:%d" % buffer_size)
-
         self.accumulated_gradient = torch.zeros(self.GRADIENT_SIZE)
 
     def encode(self, tensor):
@@ -280,8 +277,6 @@ class TCPKServer:
         #     self.RECV_BUF_SIZE)
 
         self.server.bind(self.ADDR)
-        buffer_size = self.server.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
-        print("Buffer size [After]:%d" % buffer_size)
 
         self._indices_queue = []
         self.accumulated_gradient = torch.zeros(self.GRADIENT_SIZE)

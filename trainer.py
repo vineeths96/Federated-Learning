@@ -26,27 +26,29 @@ config = dict(
     # communication="TCPUDP",
     server_address="10.32.50.26",
     timeout=1,
-    # dataset="CIFAR",
-    dataset="MNIST",
-    # algorithm="local_sgd",
-    algorithm="distributed_learning",
-    architecture="CNN",
-    # architecture="ResNet18",
+    dataset="CIFAR",
+    # dataset="MNIST",
+    algorithm="local_sgd",
+    # algorithm="distributed_learning",
+    # architecture="CNN",
+    architecture="ResNet18",
     # architecture="ResNet50",
     # architecture="VGG16",
     # architecture="MobileNet",
     # architecture="MobileNetV2",
-    gradient_size={"CNN": 582026,"ResNet18": 11173962, "ResNet50": 23520842, "VGG16": 14728266, "MobileNet": 3217226, "MobileNetV2": 2296922},
+    gradient_size={
+        "CNN": 582026,
+        "ResNet18": 11173962,
+        "ResNet50": 23520842,
+        "VGG16": 14728266,
+        "MobileNet": 3217226,
+        "MobileNetV2": 2296922,
+    },
     local_steps=1,
     chunk=15000,
     delay=0,
     server_delay=10e-3,
     # K=10000,
-    # compression=1/1000,
-    # quantization_level=6,
-    # higher_quantization_level=10,
-    # quantization_levels=[6, 10, 16],
-    # rank=1,
     reducer="NoneAllReducer",
     # reducer="GlobalRandKReducer",
     # reducer="GlobalTopKReducer",
@@ -70,77 +72,22 @@ def initiate_distributed(local_rank, world_size):
     )
 
 
-def train(local_rank, world_size):
+def train(local_rank):
     set_seed(config["seed"])
     logger = Logger(config)
 
-    # device = torch.device(f"cuda:{local_rank}")
     device = torch.device(f"cuda:{0}")
     timer = Timer(verbosity_level=config["log_verbosity"])
 
-    if config["reducer"] in [
-        "NoneReducer",
-        "NoneAllReducer",
-        "TernGradReducer",
-        "TernGradModReducer",
-    ]:
+    if config["reducer"] == "NoneAllReducer":
         reducer = globals()[config["reducer"]](config, device, timer)
     elif config["reducer"] in [
-        "QSGDReducer",
-        "QSGDWECReducer",
-        "QSGDWECModReducer",
-        "QSGDBPReducer",
-        "QSGDBPAllReducer",
-        "QSGDMaxNormReducer",
-        "NUQSGDModReducer",
-        "NUQSGDMaxNormReducer",
-        "QSGDMaxNormBiasedReducer",
-        "QSGDMaxNormBiasedMemoryReducer",
-        "NUQSGDMaxNormBiasedReducer",
-        "NUQSGDMaxNormBiasedMemoryReducer",
-        "QSGDMaxNormMaskReducer",
+        "GlobalTopKReducer",
+        "GlobalRandKReducer",
+        "GlobalTopKMemoryReducer",
+        "GlobalRandKMemoryReducer",
     ]:
-        reducer = globals()[config["reducer"]](device, timer, quantization_level=config["quantization_level"])
-    elif config["reducer"] in [
-        "GlobalRandKMaxNormReducer",
-        "MaxNormGlobalRandKReducer",
-    ]:
-        reducer = globals()[config["reducer"]](
-            device,
-            timer,
-            K=config["K"],
-            quantization_level=config["quantization_level"],
-        )
-    elif config["reducer"] in ["TopKReducer", "GlobalTopKReducer", "GlobalRandKReducer", "GlobalTopKMemoryReducer", "GlobalRandKMemoryReducer"]:
         reducer = globals()[config["reducer"]](config, device, timer)
-    elif config["reducer"] in ["TopKReducerRatio", "GlobalTopKReducerRatio"]:
-        reducer = globals()[config["reducer"]](device, timer, compression=config["compression"])
-    elif config["reducer"] in ["QSGDMaxNormTwoScaleReducer"]:
-        reducer = globals()[config["reducer"]](
-            device,
-            timer,
-            lower_quantization_level=config["quantization_level"],
-            higher_quantization_level=config["higher_quantization_level"],
-        )
-    elif config["reducer"] in ["GlobalRandKMaxNormTwoScaleReducer"]:
-        reducer = globals()[config["reducer"]](
-            device,
-            timer,
-            lower_quantization_level=config["quantization_level"],
-            higher_quantization_level=config["higher_quantization_level"],
-        )
-    elif config["reducer"] in ["QSGDMaxNormMultiScaleReducer"]:
-        reducer = globals()[config["reducer"]](
-            device,
-            timer,
-            quantization_levels=config["quantization_levels"],
-        )
-    elif config["reducer"] in ["RankKReducer"]:
-        reducer = globals()[config["reducer"]](
-            device,
-            timer,
-            rank=config["rank"],
-        )
     else:
         raise NotImplementedError("Reducer method not implemented")
 
@@ -163,7 +110,7 @@ def train(local_rank, world_size):
     optimizer = optim.SGD(params=model.parameters, lr=lr, momentum=0.9, weight_decay=5e-4, nesterov=True)
 
     # scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer, step_size=50, gamma=0.1)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config["num_epochs"], eta_min=0)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config["num_epochs"], eta_min=0)
 
     for epoch in range(config["num_epochs"]):
         if local_rank == 0:
@@ -198,10 +145,6 @@ def train(local_rank, world_size):
                         with timer("batch.reduce", epoch_frac):
                             bits_communicated += reducer.reduce(send_buffers, params)
 
-                            # with torch.no_grad():
-                            #     for param in params:
-                            #         param.mul_(1 / config["num_clients"])
-
                     elif config["algorithm"] == "distributed_learning":
                         with timer("batch.accumulate", epoch_frac, verbosity=2):
                             for grad, send_buffer in zip(grads, send_buffers):
@@ -213,7 +156,7 @@ def train(local_rank, world_size):
                         with timer("batch.step", epoch_frac, verbosity=2):
                             optimizer.step()
                     else:
-                        raise NotImplementedError("Dataset is not implemented")
+                        raise NotImplementedError("Algorithm not implemented")
                 else:
                     with timer("batch.step", epoch_frac, verbosity=2):
                         optimizer.step()
@@ -221,7 +164,6 @@ def train(local_rank, world_size):
         scheduler.step()
 
         with timer("epoch_metrics.collect", epoch, verbosity=2):
-            # epoch_metrics.reduce()
             for key, value in epoch_metrics.values().items():
                 logger.log_info(
                     key,
@@ -261,4 +203,4 @@ if __name__ == "__main__":
     world_size = args.world_size
 
     initiate_distributed(local_rank, world_size)
-    train(local_rank, world_size)
+    train(local_rank)

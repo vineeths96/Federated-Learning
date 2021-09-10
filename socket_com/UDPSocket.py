@@ -51,9 +51,6 @@ class UDPServer:
         self.server.bind(self.ADDR)
         self.server.settimeout(TIMEOUT)
 
-        buffer_size = self.server.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
-        print("Buffer size [After]:%d" % buffer_size)
-
         self._indices_queue = []
         self.accumulated_gradient = torch.zeros(self.GRADIENT_SIZE)
 
@@ -101,9 +98,6 @@ class UDPServer:
             while readnext:
                 msg, addr = self.server.recvfrom(BUFFER)
 
-                # if addr not in self.DEVICES:
-                #     self.DEVICES.append(addr)
-
                 try:
                     decoded_msg = self.decode(msg)
                 except:
@@ -118,7 +112,7 @@ class UDPServer:
                 buffer.append(decoded_msg)
         except:
             if addr and addr not in self.DEVICES:
-                    self.DEVICES.append(addr)
+                self.DEVICES.append(addr)
 
         if len(buffer) > 1:
             msg = torch.cat(buffer)
@@ -126,13 +120,12 @@ class UDPServer:
             msg = buffer[0]
 
         print(f"[{addr}] {msg}")
-        print(f"Length of message received: {msg.shape[0]}")
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
         received_coordinates_fraction = gradient.nelement() / self.GRADIENT_SIZE
 
-        self.accumulated_gradient[indices] += 1/ received_coordinates_fraction * gradient
+        self.accumulated_gradient[indices] += 1 / received_coordinates_fraction * gradient
 
     def start(self):
         print(f"[LISTENING] Server is listening on {self.SERVER}")
@@ -242,7 +235,6 @@ class UDPClient:
             msg = buffer[0]
 
         # print(f"[{addr}] {msg}")
-        # print(f"Length of message received: {msg.shape[0]}")
 
         return msg
 
@@ -364,7 +356,7 @@ class UDPKServer:
                 buffer.append(decoded_msg)
         except socket.error:
             if addr and addr not in self.DEVICES:
-                    self.DEVICES.append(addr)
+                self.DEVICES.append(addr)
 
         if len(buffer) > 1:
             msg = torch.cat(buffer)
@@ -372,13 +364,12 @@ class UDPKServer:
             msg = buffer[0]
 
         print(f"[{addr}] {msg}")
-        print(f"Length of message received: {msg.shape[0]}")
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
         received_coordinates_fraction = gradient.nelement() / self.K
 
-        self.accumulated_gradient[indices] += 1/ received_coordinates_fraction * gradient
+        self.accumulated_gradient[indices] += 1 / received_coordinates_fraction * gradient
 
         # time.sleep(self.DELAY)
         # self.send(msg, addr)
@@ -401,8 +392,6 @@ class UDPKServer:
                 RandK_indices = self._indices_queue.pop().long()
                 RandK_flat_grad = self.accumulated_gradient[RandK_indices]
                 accumulated_grad_indices = torch.vstack([RandK_indices, RandK_flat_grad]).T
-
-                print(RandK_indices)
 
                 for client in self.DEVICES:
                     self.send(accumulated_grad_indices, client)
@@ -499,7 +488,6 @@ class UDPKClient:
             msg = buffer[0]
 
         # print(f"[{addr}] {msg}")
-        # print(f"Length of message received: {msg.shape[0]}")
 
         return msg
 

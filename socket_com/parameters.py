@@ -4,7 +4,7 @@ SERVER = "10.32.50.26"
 SERVER_COMP = "10.216.18.179"
 
 NUM_CLIENTS = 2
-TIMEOUT = 3
+TIMEOUT = 1
 
 MSG_SIZE = 25e5
 CHUNK = 1000
@@ -14,13 +14,12 @@ BUFFER = 1024 * 64
 
 use_TCPUDP = True
 # use_TCPUDP = False
+
 # use_TCP = True
 use_TCP = False
+
 # UDP_DEBUG = True
 UDP_DEBUG = False
 
 REPS = 1
-# MSG_SIZES = [2296922]
-MSG_SIZES = [25000]
-MSG_SIZE = MSG_SIZES[0]
-# MSG_SIZES = [1, 5, 10, 50, 100, 500, 1000, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 25e6]
+MSG_SIZES = [1, 5, 10, 50, 100, 500, 1000, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 25e6]

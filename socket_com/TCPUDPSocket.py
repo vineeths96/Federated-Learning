@@ -156,7 +156,6 @@ class TCPUDPServer:
             msg = buffer[0]
 
         print(f"[{addr}] {msg}")
-        # print(f"Length of message received: {msg.shape[0]}")
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
@@ -205,16 +204,6 @@ class TCPUDPServer:
 
                     for thread in sending_threads:
                         thread.join()
-
-                    import gc
-                    gc.enable()
-
-                    del clients[:]
-                    del receiving_threads[:]
-                    del sending_threads[:]
-                    del self.DEVICES[:]
-
-                    gc.collect()
 
                     clients = []
                     receiving_threads = []
@@ -366,7 +355,6 @@ class TCPUDPClient:
             msg = buffer[0]
 
         # print(f"[{addr}] {msg}")
-        # print(f"Length of message received: {msg.shape[0]}")
 
         aggregated_grad = torch.zeros(self.GRADIENT_SIZE)
 
@@ -452,13 +440,19 @@ class TCPUDPKServer:
         # time.sleep(self.DELAY)
         # self.send_EOT(conn)
 
+        return
+
     def sendTCP_SOT(self, conn):
         encoded_message = self.encode(self.START_OF_MESSAGE)
         conn.send(encoded_message)
 
+        return
+
     def sendTCP_EOT(self, conn):
         encoded_message = self.encode(self.END_OF_MESSAGE)
         conn.send(encoded_message)
+
+        return
 
     def sendUDP(self, tensor, addr, local_rank):
         messages = tensor.split(self.CHUNK)
@@ -469,12 +463,16 @@ class TCPUDPKServer:
 
             time.sleep(self.DELAY)
 
+        return
+
     def send(self, accumulated_grad_indices, client, device, local_rank):
         self.sendTCP_SOT(client)
         self.sendUDP(accumulated_grad_indices, device, local_rank)
         self.sendTCP_EOT(client)
         client.shutdown(1)
         client.close()
+
+        return
 
     def receive(self, conn, addr):
         buffer = []
@@ -517,13 +515,12 @@ class TCPUDPKServer:
             msg = buffer[0]
 
         print(f"[{addr}] {msg}")
-        print(f"Length of message received: {msg.shape[0]}")
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
         received_coordinates_fraction = gradient.nelement() / self.K
 
-        self.accumulated_gradient[indices] += 1/ received_coordinates_fraction * gradient
+        self.accumulated_gradient[indices] += 1 / received_coordinates_fraction * gradient
 
         return
 
@@ -562,8 +559,6 @@ class TCPUDPKServer:
                     RandK_flat_grad = self.accumulated_gradient[RandK_indices]
                     accumulated_grad_indices = torch.vstack([RandK_indices, RandK_flat_grad]).T
 
-                    # print(RandK_indices)
-
                     self.DEVICES.sort(key=lambda device: device[0])
                     clients.sort(key=lambda client: client.getpeername())
 
@@ -586,12 +581,16 @@ class TCPUDPKServer:
         except KeyboardInterrupt:
             self.stop()
 
+        return
+
     def stop(self):
         self.serverTCP.shutdown(1)
         self.serverTCP.close()
 
         for ind in range(self.NUM_CLIENTS):
             self.serverUDP[ind].close()
+
+        return
 
 
 class TCPUDPKClient:
@@ -653,13 +652,19 @@ class TCPUDPKClient:
         # time.sleep(self.DELAY)
         # self.send_EOT(conn)
 
+        return
+
     def sendTCP_SOT(self):
         encoded_message = self.encode(self.START_OF_MESSAGE)
         self.clientTCP.send(encoded_message)
 
+        return
+
     def sendTCP_EOT(self):
         encoded_message = self.encode(self.END_OF_MESSAGE)
         self.clientTCP.send(encoded_message)
+
+        return
 
     def sendUDP(self, tensor):
         messages = tensor.split(self.CHUNK)
@@ -670,10 +675,14 @@ class TCPUDPKClient:
 
             time.sleep(self.DELAY)
 
+        return
+
     def send(self, tensor):
         self.sendTCP_SOT()
         self.sendUDP(tensor)
         self.sendTCP_EOT()
+
+        return
 
     def receive(self):
         buffer = []
@@ -711,7 +720,6 @@ class TCPUDPKClient:
             msg = buffer[0]
 
         # print(f"[{addr}] {msg}")
-        # print(f"Length of message received: {msg.shape[0]}")
 
         return msg
 
@@ -786,13 +794,19 @@ class TCPUDPTopKServer:
         # time.sleep(self.DELAY)
         # self.send_EOT(conn)
 
+        return
+
     def sendTCP_SOT(self, conn):
         encoded_message = self.encode(self.START_OF_MESSAGE)
         conn.send(encoded_message)
 
+        return
+
     def sendTCP_EOT(self, conn):
         encoded_message = self.encode(self.END_OF_MESSAGE)
         conn.send(encoded_message)
+
+        return
 
     def sendUDP(self, tensor, addr, local_rank):
         messages = tensor.split(self.CHUNK)
@@ -803,12 +817,16 @@ class TCPUDPTopKServer:
 
             time.sleep(self.DELAY)
 
+        return
+
     def send(self, accumulated_grad_indices, client, device, local_rank):
         self.sendTCP_SOT(client)
         self.sendUDP(accumulated_grad_indices, device, local_rank)
         self.sendTCP_EOT(client)
         client.shutdown(1)
         client.close()
+
+        return
 
     def receive(self, conn, addr):
         buffer = []
@@ -851,13 +869,12 @@ class TCPUDPTopKServer:
             msg = buffer[0]
 
         print(f"[{addr}] {msg}")
-        print(f"Length of message received: {msg.shape[0]}")
 
         indices = msg[:, 0].long()
         gradient = msg[:, 1]
         received_coordinates_fraction = gradient.nelement() / self.K
 
-        self.accumulated_gradient[indices] += 1/ received_coordinates_fraction * gradient
+        self.accumulated_gradient[indices] += 1 / received_coordinates_fraction * gradient
 
         return
 
@@ -916,12 +933,16 @@ class TCPUDPTopKServer:
         except KeyboardInterrupt:
             self.stop()
 
+        return
+
     def stop(self):
         self.serverTCP.shutdown(1)
         self.serverTCP.close()
 
         for ind in range(self.NUM_CLIENTS):
             self.serverUDP[ind].close()
+
+        return
 
 
 class TCPUDPTopKClient:
@@ -983,13 +1004,19 @@ class TCPUDPTopKClient:
         # time.sleep(self.DELAY)
         # self.send_EOT(conn)
 
+        return
+
     def sendTCP_SOT(self):
         encoded_message = self.encode(self.START_OF_MESSAGE)
         self.clientTCP.send(encoded_message)
 
+        return
+
     def sendTCP_EOT(self):
         encoded_message = self.encode(self.END_OF_MESSAGE)
         self.clientTCP.send(encoded_message)
+
+        return
 
     def sendUDP(self, tensor):
         messages = tensor.split(self.CHUNK)
@@ -1000,10 +1027,14 @@ class TCPUDPTopKClient:
 
             time.sleep(self.DELAY)
 
+        return
+
     def send(self, tensor):
         self.sendTCP_SOT()
         self.sendUDP(tensor)
         self.sendTCP_EOT()
+
+        return
 
     def receive(self):
         buffer = []
