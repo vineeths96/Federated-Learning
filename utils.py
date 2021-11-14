@@ -128,7 +128,7 @@ def plot_loss_time_curves(log_path):
                     label = "FedGradUDP"
 
             log_dict = np.load(os.path.join(experiment, "log_dict.npy"), allow_pickle=True)
-            loss = log_dict[()].get("test_loss")
+            loss = log_dict[()].get("train_loss")
             time = log_dict[()].get("time")
             axes_main.plot(time, loss, label=label)
 
